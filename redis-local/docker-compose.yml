@@ -1,0 +1,140 @@
+version: "3.8"
+
+services:
+  redis-node-1:
+    image: redis:7.2.4
+    platform: linux/amd64
+    container_name: redis-node-1
+    hostname: redis-node-1
+    command:
+      - "redis-server"
+      - "--port"
+      - "7001"
+      - "--cluster-enabled"
+      - "yes"
+      - "--cluster-config-file"
+      - "nodes.conf"
+      - "--cluster-node-timeout"
+      - "5000"
+      - "--appendonly"
+      - "yes"
+      - "--protected-mode"
+      - "no"
+      - "--cluster-announce-ip"
+      - "redis-node-1"
+      - "--cluster-announce-port"
+      - "7001"
+      - "--cluster-announce-bus-port"
+      - "17001"
+      - "--requirepass"
+      - "${REDIS_PASSWORD}"
+      - "--masterauth"
+      - "${REDIS_PASSWORD}"
+    ports:
+      - "7001:7001"
+      - "17001:17001"
+    volumes:
+      - ../volumes/redis-node-1-data:/data
+    networks:
+      - redis-cluster-net
+
+  redis-node-2:
+    image: redis:7.2.4
+    platform: linux/amd64
+    container_name: redis-node-2
+    hostname: redis-node-2
+    command:
+      - "redis-server"
+      - "--port"
+      - "7002"
+      - "--cluster-enabled"
+      - "yes"
+      - "--cluster-config-file"
+      - "nodes.conf"
+      - "--cluster-node-timeout"
+      - "5000"
+      - "--appendonly"
+      - "yes"
+      - "--protected-mode"
+      - "no"
+      - "--cluster-announce-ip"
+      - "redis-node-2"
+      - "--cluster-announce-port"
+      - "7002"
+      - "--cluster-announce-bus-port"
+      - "17002"
+      - "--requirepass"
+      - "${REDIS_PASSWORD}"
+      - "--masterauth"
+      - "${REDIS_PASSWORD}"
+    ports:
+      - "7002:7002"
+      - "17002:17002"
+    volumes:
+      - ../volumes/redis-node-2-data:/data
+    networks:
+      - redis-cluster-net
+
+  redis-node-3:
+    image: redis:7.2.4
+    platform: linux/amd64
+    container_name: redis-node-3
+    hostname: redis-node-3
+    command:
+      - "redis-server"
+      - "--port"
+      - "7003"
+      - "--cluster-enabled"
+      - "yes"
+      - "--cluster-config-file"
+      - "nodes.conf"
+      - "--cluster-node-timeout"
+      - "5000"
+      - "--appendonly"
+      - "yes"
+      - "--protected-mode"
+      - "no"
+      - "--cluster-announce-ip"
+      - "redis-node-3"
+      - "--cluster-announce-port"
+      - "7003"
+      - "--cluster-announce-bus-port"
+      - "17003"
+      - "--requirepass"
+      - "${REDIS_PASSWORD}"
+      - "--masterauth"
+      - "${REDIS_PASSWORD}"
+    ports:
+      - "7003:7003"
+      - "17003:17003"
+    volumes:
+      - ../volumes/redis-node-3-data:/data
+    networks:
+      - redis-cluster-net
+
+  redis-cluster-init:
+    image: redis:7.2.4
+    platform: linux/amd64
+    container_name: redis-cluster-init
+    depends_on:
+      - redis-node-1
+      - redis-node-2
+      - redis-node-3
+    command: >
+      bash -c "
+        echo 'Waiting for Redis nodes to start...' &&
+        sleep 5 &&
+        echo 'Creating cluster...' &&
+        redis-cli -a $${REDIS_PASSWORD} --cluster create redis-node-1:7001 redis-node-2:7002 redis-node-3:7003 --cluster-replicas 0 --cluster-yes
+      "
+    networks:
+      - redis-cluster-net
+
+networks:
+  redis-cluster-net:
+    driver: bridge
+
+volumes:
+  redis-node-1-data:
+  redis-node-2-data:
+  redis-node-3-data:

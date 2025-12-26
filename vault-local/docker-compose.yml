@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  vault:
+    image: hashicorp/vault:1.15
+    platform: linux/amd64
+    container_name: vault-local
+    ports:
+      - "8200:8200"
+      - "8201:8201"
+    restart: always
+    volumes:
+      - ../volumes/vault-logs:/vault/logs
+      - ../volumes/vault-data:/vault/data
+      - ./config:/vault/config
+    cap_add:
+      - IPC_LOCK
+    environment:
+      VAULT_ADDR: 'http://127.0.0.1:8200'
+      VAULT_API_ADDR: 'http://127.0.0.1:8200'
+    entrypoint: vault server -config /vault/config/config.hcl
