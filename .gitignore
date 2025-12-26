@@ -2,3 +2,4 @@
 *.iml
 volumes
 vault_keys.txt
+*.env
