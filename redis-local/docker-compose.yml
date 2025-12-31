@@ -8,6 +8,7 @@ services:
     hostname: redis-node-1
     command:
       - "redis-server"
+      - "/usr/local/etc/redis/redis.conf"
       - "--port"
       - "7001"
       - "--cluster-enabled"
@@ -26,15 +27,15 @@ services:
       - "7001"
       - "--cluster-announce-bus-port"
       - "17001"
-      - "--requirepass"
-      - "${REDIS_PASSWORD}"
-      - "--masterauth"
-      - "${REDIS_PASSWORD}"
+      - "--aclfile"
+      - "/usr/local/etc/redis/users.acl"
     ports:
       - "7001:7001"
       - "17001:17001"
     volumes:
       - ../volumes/redis-node-1-data:/data
+      - ./users.acl:/usr/local/etc/redis/users.acl
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
     networks:
       - redis-cluster-net
 
@@ -45,6 +46,7 @@ services:
     hostname: redis-node-2
     command:
       - "redis-server"
+      - "/usr/local/etc/redis/redis.conf"
       - "--port"
       - "7002"
       - "--cluster-enabled"
@@ -63,15 +65,15 @@ services:
       - "7002"
       - "--cluster-announce-bus-port"
       - "17002"
-      - "--requirepass"
-      - "${REDIS_PASSWORD}"
-      - "--masterauth"
-      - "${REDIS_PASSWORD}"
+      - "--aclfile"
+      - "/usr/local/etc/redis/users.acl"
     ports:
       - "7002:7002"
       - "17002:17002"
     volumes:
       - ../volumes/redis-node-2-data:/data
+      - ./users.acl:/usr/local/etc/redis/users.acl
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
     networks:
       - redis-cluster-net
 
@@ -82,6 +84,7 @@ services:
     hostname: redis-node-3
     command:
       - "redis-server"
+      - "/usr/local/etc/redis/redis.conf"
       - "--port"
       - "7003"
       - "--cluster-enabled"
@@ -100,15 +103,15 @@ services:
       - "7003"
       - "--cluster-announce-bus-port"
       - "17003"
-      - "--requirepass"
-      - "${REDIS_PASSWORD}"
-      - "--masterauth"
-      - "${REDIS_PASSWORD}"
+      - "--aclfile"
+      - "/usr/local/etc/redis/users.acl"
     ports:
       - "7003:7003"
       - "17003:17003"
     volumes:
       - ../volumes/redis-node-3-data:/data
+      - ./users.acl:/usr/local/etc/redis/users.acl
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
     networks:
       - redis-cluster-net
 

@@ -10,9 +10,9 @@ fetch_secret() {
     local path=$1
     local field=$2
     if [ -n "${VAULT_TOKEN:-}" ]; then
-        docker exec -e VAULT_TOKEN="$VAULT_TOKEN" vault-local vault kv get -mount=secret -field="$field" "$path"
+        docker exec -e VAULT_TOKEN="$VAULT_TOKEN" vault-local vault kv get -mount=infras -field="$field" "$path"
     else
-        docker exec vault-local vault kv get -mount=secret -field="$field" "$path"
+        docker exec vault-local vault kv get -mount=infras -field="$field" "$path"
     fi
 }
 

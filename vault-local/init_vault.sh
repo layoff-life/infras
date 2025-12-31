@@ -6,17 +6,6 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 KEYS_FILE="${ROOT_DIR}/vault_keys.txt"
-ENV_FILE="${ROOT_DIR}/local.env"
-
-# Load environment variables
-if [ -f "$ENV_FILE" ]; then
-    set -a
-    source "$ENV_FILE"
-    set +a
-else
-    echo "[ERROR] .env file not found at $ENV_FILE"
-    exit 1
-fi
 
 # Give Vault time to start
 sleep 2
@@ -31,6 +20,17 @@ run_vault() {
   else
     docker exec vault-local vault "$@"
   fi
+}
+
+# Function to generate a strong random password
+# Length: 20, Alphanumeric (A-Z, a-z, 0-9)
+generate_password() {
+    # filtering for alphanumeric only, head -c 20
+    # Use subshell to disable pipefail locally because head closes pipe causing SIGPIPE in tr
+    (
+        set +o pipefail
+        LC_ALL=C tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 20
+    )
 }
 
 # Check if Vault is already initialized
@@ -54,21 +54,36 @@ echo "[INFO] Logged in with root token."
 
 # --- Write Secrets ---
 echo "[INFO] Writing secrets to Vault..."
-# Enable kv-v2 secrets engine at 'secret/' if not enabled (default in dev mode, but good to ensure)
-# In standard server mode, we might need to enable it.
-if ! run_vault secrets list -format=json | jq -e '."secret/"' > /dev/null; then
-    echo "[INFO] Enabling kv-v2 secrets engine at secret/..."
-    run_vault secrets enable -path=secret kv-v2
+
+# Enable kv-v2 secrets engine at 'infras/' if not enabled
+if ! run_vault secrets list -format=json | jq -e '."infras/"' > /dev/null; then
+    echo "[INFO] Enabling kv-v2 secrets engine at infras/..."
+    run_vault secrets enable -path=infras kv-v2
 fi
 
+# Enable kv-v2 secrets engine at 'apps/' if not enabled (initially empty but needed for app secrets)
+if ! run_vault secrets list -format=json | jq -e '."apps/"' > /dev/null; then
+    echo "[INFO] Enabling kv-v2 secrets engine at apps/..."
+    run_vault secrets enable -path=apps kv-v2
+fi
+
+# Generate Secrets
+echo "[INFO] Generating strong passwords..."
+MYSQL_ROOT_PASSWORD=$(generate_password)
+KAFKA_SASL_PASSWORD=$(generate_password)
+REDIS_PASSWORD=$(generate_password)
+POSTGRES_PASSWORD=$(generate_password)
+
+# Define Usernames
+KAFKA_SASL_USERNAME="admin"
+
 # Set the token for the following commands within the container
-run_vault kv put -mount=secret mysql/root password="$MYSQL_ROOT_PASSWORD"
-run_vault kv put -mount=secret mysql/admin password="$MYSQL_ADMIN_PASSWORD"
-run_vault kv put -mount=secret mysql/my_user password="$MYSQL_USER_PASSWORD"
-run_vault kv put -mount=secret kafka/sasl username="$KAFKA_SASL_USERNAME" password="$KAFKA_SASL_PASSWORD"
-run_vault kv put -mount=secret redis/auth password="$REDIS_PASSWORD"
-run_vault kv put -mount=secret postgres/auth password="$POSTGRES_PASSWORD"
+# Writing to infras/<infra_type>/<component>
+run_vault kv put -mount=infras mysql/root username="root" password="$MYSQL_ROOT_PASSWORD"
+run_vault kv put -mount=infras kafka/sasl username="$KAFKA_SASL_USERNAME" password="$KAFKA_SASL_PASSWORD"
+run_vault kv put -mount=infras redis/auth username="default" password="$REDIS_PASSWORD"
+run_vault kv put -mount=infras postgres/auth username="postgres" password="$POSTGRES_PASSWORD"
 echo "[OK] All secrets have been written to Vault."
 
 echo "[INFO] Verifying secrets..."
-run_vault kv get -mount=secret mysql/root
+run_vault kv get -mount=infras mysql/root

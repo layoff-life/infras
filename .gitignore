@@ -3,3 +3,5 @@
 volumes
 vault_keys.txt
 *.env
+.DS_Store
+*.log

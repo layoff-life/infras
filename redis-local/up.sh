@@ -4,15 +4,16 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 KEYS_FILE="${ROOT_DIR}/vault_keys.txt"
 COMPOSE_FILE="${ROOT_DIR}/redis-local/docker-compose.yml"
+ACL_FILE="${ROOT_DIR}/redis-local/users.acl"
 
 # Function to fetch secret from Vault
 fetch_secret() {
     local path=$1
     local field=$2
     if [ -n "${VAULT_TOKEN:-}" ]; then
-        docker exec -e VAULT_TOKEN="$VAULT_TOKEN" vault-local vault kv get -mount=secret -field="$field" "$path"
+        docker exec -e VAULT_TOKEN="$VAULT_TOKEN" vault-local vault kv get -mount=infras -field="$field" "$path"
     else
-        docker exec vault-local vault kv get -mount=secret -field="$field" "$path"
+        docker exec vault-local vault kv get -mount=infras -field="$field" "$path"
     fi
 }
 
@@ -35,6 +36,13 @@ else
         exit 1
     fi
 fi
+
+# Generate ACL file with actual password
+echo "[INFO] Generating ACL file..."
+cat > "$ACL_FILE" <<EOF
+user default on >${REDIS_PASSWORD} ~* &* +@all
+user worker on >${REDIS_PASSWORD} ~* &* +@all
+EOF
 
 echo "[INFO] Starting redis-local using ${COMPOSE_FILE}..."
 docker compose -f "${COMPOSE_FILE}" up -d

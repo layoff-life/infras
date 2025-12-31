@@ -10,9 +10,9 @@ fetch_secret() {
     local path=$1
     local field=$2
     if [ -n "${VAULT_TOKEN:-}" ]; then
-        docker exec -e VAULT_TOKEN="$VAULT_TOKEN" vault-local vault kv get -mount=secret -field="$field" "$path"
+        docker exec -e VAULT_TOKEN="$VAULT_TOKEN" vault-local vault kv get -mount=infras -field="$field" "$path"
     else
-        docker exec vault-local vault kv get -mount=secret -field="$field" "$path"
+        docker exec vault-local vault kv get -mount=infras -field="$field" "$path"
     fi
 }
 
@@ -26,10 +26,8 @@ if [ -f "$KEYS_FILE" ] && [ "$(docker ps -q -f name=vault-local)" ]; then
     
     # Fetch Secrets
     export MYSQL_ROOT_PASSWORD=$(fetch_secret mysql/root password)
-    export MYSQL_USER_NAME="my_user"
-    export MYSQL_USER_PASSWORD=$(fetch_secret mysql/my_user password)
-    export MYSQL_ADMIN_USER="admin"
-    export MYSQL_ADMIN_PASSWORD=$(fetch_secret mysql/admin password)
+    
+    echo "[INFO] Secrets fetched successfully."
     
     echo "[INFO] Secrets fetched successfully."
 else

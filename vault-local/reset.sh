@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-COMPOSE_FILE="${ROOT_DIR}/vault/docker-compose.yml"
+COMPOSE_FILE="${ROOT_DIR}/vault-local/docker-compose.yml"
 DATA_DIR="${ROOT_DIR}/volumes/vault-data"
 KEYS_FILE="${ROOT_DIR}/vault_keys.txt"
 
