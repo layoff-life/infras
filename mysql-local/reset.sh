@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
-COMPOSE_FILE="${ROOT_DIR}/infras/mysql-local/docker-compose.yml"
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 DATA_DIR="${ROOT_DIR}/volumes/mysql-local-data"
 
 echo "[INFO] Stopping mysql-local..."
-docker compose -f "${COMPOSE_FILE}" down
+${ROOT_DIR}/mysql-local/down.sh
 
 if [ -d "$DATA_DIR" ]; then
     echo "[INFO] Removing data directory: $DATA_DIR"
@@ -14,7 +13,7 @@ if [ -d "$DATA_DIR" ]; then
 fi
 
 echo "[INFO] Starting mysql-local..."
-docker compose -f "${COMPOSE_FILE}" up -d
+${ROOT_DIR}/mysql-local/up.sh
 
 echo "[OK] Reset complete. Waiting for MySQL to be ready..."
 sleep 10

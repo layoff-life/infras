@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
-COMPOSE_FILE="${ROOT_DIR}/infras/kafka-local/docker-compose.yml"
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 DATA_DIR_PREFIX="${ROOT_DIR}/volumes/kafka-"
 
 echo "[INFO] Stopping kafka-local cluster..."
-docker compose -f "${COMPOSE_FILE}" down
+${ROOT_DIR}/kafka-local/down.sh
 
 echo "[INFO] Checking for processes hogging ports 9092-9097..."
 for PORT in 9092 9093 9094 9095 9096 9097; do
@@ -24,7 +23,7 @@ echo "[INFO] Removing data directories..."
 rm -rf "${DATA_DIR_PREFIX}"*-data
 
 echo "[INFO] Starting kafka-local cluster..."
-docker compose -f "${COMPOSE_FILE}" up -d
+${ROOT_DIR}/kafka-local/up.sh
 
 echo "[OK] Reset complete. Waiting for Kafka cluster to be ready..."
 sleep 10
