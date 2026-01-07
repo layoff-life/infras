@@ -44,12 +44,24 @@ else
     fi
 fi
 
-# Generate ACL file with actual password
-echo "[INFO] Generating ACL file..."
-cat > "$ACL_FILE" <<EOF
+# Generate ACL file with actual password if not exist
+if [ ! -f "$ACL_FILE" ]; then
+    echo "[INFO] Generating ACL file..."
+    cat > "$ACL_FILE" <<EOF
 user default on >${REDIS_PASSWORD} ~* &* +@all
 user worker on >${REDIS_PASSWORD} ~* &* +@all
 EOF
+else
+    echo "[INFO] ACL file exists. Updating default/worker passwords..."
+    # Update default and worker passwords while preserving other users
+    # We use awk to safely replace the password field (4th field: >password)
+    TEMP_ACL=$(mktemp)
+    awk -v pass="$REDIS_PASSWORD" '
+    /^user default / { $4 = ">" pass }
+    /^user worker / { $4 = ">" pass }
+    { print }
+    ' "$ACL_FILE" > "$TEMP_ACL" && cat "$TEMP_ACL" > "$ACL_FILE" && rm "$TEMP_ACL"
+fi
 
 echo "[INFO] Starting redis-local using ${COMPOSE_FILE}..."
 docker compose -f "${COMPOSE_FILE}" up -d
