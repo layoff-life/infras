@@ -58,6 +58,9 @@ else
     echo "[WARN] Vault not detected or keys missing. Using existing configuration."
 fi
 
+# Export a static CLUSTER_ID
+export CLUSTER_ID='MkU3OEVBNTcwNTJENDM2Qk'
+
 echo "[INFO] Starting kafka-local using ${COMPOSE_FILE}..."
 docker compose -f "${COMPOSE_FILE}" up -d
 echo "[OK] kafka-local is starting. Use 'docker ps' to verify the container."
