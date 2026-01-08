@@ -71,17 +71,17 @@ EOF
         log_info "Using local kafka-acls.sh from host environment."
         export KAFKA_OPTS="-Djava.net.preferIPv4Stack=true"
 
-        log_info "Granting 'All' on Topic '${service_name}-*'"
+        log_info "Granting 'All' on Topic '${service_name}.*'"
         "$local_kafka_acls" --bootstrap-server 127.0.0.1:9095,127.0.0.1:9096,127.0.0.1:9097 \
             --command-config "$admin_props" \
             --add --allow-principal "User:$service_name" \
-            --operation All --topic "$service_name-" --resource-pattern-type PREFIXED
+            --operation All --topic "$service_name." --resource-pattern-type PREFIXED
 
-        log_info "Granting 'All' on Group '${service_name}-*'"
+        log_info "Granting 'All' on Group '${service_name}.*'"
         "$local_kafka_acls" --bootstrap-server 127.0.0.1:9095,127.0.0.1:9096,127.0.0.1:9097 \
             --command-config "$admin_props" \
             --add --allow-principal "User:$service_name" \
-            --operation All --group "$service_name-" --resource-pattern-type PREFIXED
+            --operation All --group "$service_name." --resource-pattern-type PREFIXED
 
         # Cleanup local temp admin props
         rm "$admin_props"
@@ -101,18 +101,18 @@ EOF
         docker exec -u 0 "$container" chmod 644 /tmp/admin.properties
 
         # Run kafka-acls using the admin properties, connecting to the DOCKER_CLIENT listener ports
-        log_info "Granting 'All' on Topic '${service_name}-*'"
+        log_info "Granting 'All' on Topic '${service_name}.*'"
         docker exec "$container" kafka-acls --bootstrap-server kafka-1:29095,kafka-2:29096,kafka-3:29097 \
             --command-config /tmp/admin.properties \
             --add --allow-principal "User:$service_name" \
-            --operation All --topic "$service_name-" --resource-pattern-type PREFIXED
+            --operation All --topic "$service_name." --resource-pattern-type PREFIXED
 
         # Grant All on Group prefixed with service_name
-        log_info "Granting 'All' on Group '${service_name}-*'"
+        log_info "Granting 'All' on Group '${service_name}.*'"
         docker exec "$container" kafka-acls --bootstrap-server kafka-1:29095,kafka-2:29096,kafka-3:29097 \
             --command-config /tmp/admin.properties \
             --add --allow-principal "User:$service_name" \
-            --operation All --group "$service_name-" --resource-pattern-type PREFIXED
+            --operation All --group "$service_name." --resource-pattern-type PREFIXED
 
         # Cleanup
         rm "$admin_props"
