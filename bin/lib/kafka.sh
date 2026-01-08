@@ -25,11 +25,14 @@ create_acl() {
         
     else
         log_info "Adding new Kafka user '$service_name' to JAAS file..."
-        # Insert before the last "};"
+        # Insert before the last closing brace, removing any standalone semicolon line if present
         local new_line="    user_$service_name=\"$password\";"
         
-        # Use perl to add the new user, writing to a temp file to avoid inode issues.
-        perl -0777 -pe "s/};\s*$/$new_line\n};/s" "$jaas_file" > "$temp_jaas_file"
+        # Use perl to add the new user, handling both cases:
+        # - JAAS content ends with a standalone ';' line followed by '};'
+        # - JAAS content ends directly with '};'
+        # We replace the tail with the new user line followed by '};'.
+        perl -0777 -pe "s/(?:\n\s*;\s*)?\n\s*};\s*$/\n$new_line\n};/s" "$jaas_file" > "$temp_jaas_file"
         cat "$temp_jaas_file" > "$jaas_file"
         rm "$temp_jaas_file"
     fi
@@ -62,37 +65,59 @@ sasl.mechanism=PLAIN
 sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="$admin_user" password="$admin_pass";
 EOF
 
-    # Check for running kafka container
-    local container="kafka-1"
-    if ! docker ps --format '{{.Names}}' | grep -q "^$container$"; then
-         log_warn "Container $container is not running. Cannot provision ACLs yet. Please restart Kafka and run this again if needed."
-         rm "$admin_props"
-         return
+    # Prefer running kafka-acls from host to match advertised localhost ports
+    local local_kafka_acls="${ROOT_DIR}/kafka-local/kafka_2.12-3.8.1/bin/kafka-acls.sh"
+    if [ -x "$local_kafka_acls" ]; then
+        log_info "Using local kafka-acls.sh from host environment."
+        export KAFKA_OPTS="-Djava.net.preferIPv4Stack=true"
+
+        log_info "Granting 'All' on Topic '${service_name}-*'"
+        "$local_kafka_acls" --bootstrap-server 127.0.0.1:9095,127.0.0.1:9096,127.0.0.1:9097 \
+            --command-config "$admin_props" \
+            --add --allow-principal "User:$service_name" \
+            --operation All --topic "$service_name-" --resource-pattern-type PREFIXED
+
+        log_info "Granting 'All' on Group '${service_name}-*'"
+        "$local_kafka_acls" --bootstrap-server 127.0.0.1:9095,127.0.0.1:9096,127.0.0.1:9097 \
+            --command-config "$admin_props" \
+            --add --allow-principal "User:$service_name" \
+            --operation All --group "$service_name-" --resource-pattern-type PREFIXED
+
+        # Cleanup local temp admin props
+        rm "$admin_props"
+    else
+        # Fallback to running inside container (may show WARNs due to localhost advertised listeners)
+        local container="kafka-1"
+        if ! docker ps --format '{{.Names}}' | grep -q "^$container$"; then
+             log_warn "Container $container is not running. Cannot provision ACLs yet. Please restart Kafka and run this again if needed."
+             rm "$admin_props"
+             return
+        fi
+
+        # Copy admin props to container
+        docker cp "$admin_props" "$container":/tmp/admin.properties
+
+        # Fix permissions so kafka user can read it
+        docker exec -u 0 "$container" chmod 644 /tmp/admin.properties
+
+        # Run kafka-acls using the admin properties, connecting to the DOCKER_CLIENT listener ports
+        log_info "Granting 'All' on Topic '${service_name}-*'"
+        docker exec "$container" kafka-acls --bootstrap-server kafka-1:29095,kafka-2:29096,kafka-3:29097 \
+            --command-config /tmp/admin.properties \
+            --add --allow-principal "User:$service_name" \
+            --operation All --topic "$service_name-" --resource-pattern-type PREFIXED
+
+        # Grant All on Group prefixed with service_name
+        log_info "Granting 'All' on Group '${service_name}-*'"
+        docker exec "$container" kafka-acls --bootstrap-server kafka-1:29095,kafka-2:29096,kafka-3:29097 \
+            --command-config /tmp/admin.properties \
+            --add --allow-principal "User:$service_name" \
+            --operation All --group "$service_name-" --resource-pattern-type PREFIXED
+
+        # Cleanup
+        rm "$admin_props"
+        docker exec -u 0 "$container" rm /tmp/admin.properties
     fi
-    
-    # Copy admin props to container
-    docker cp "$admin_props" "$container":/tmp/admin.properties
-    
-    # Fix permissions so kafka user can read it
-    docker exec -u 0 "$container" chmod 644 /tmp/admin.properties
-    
-    # Run kafka-acls using the admin properties, connecting to the INTERNAL_CLIENT listener port
-    log_info "Granting 'All' on Topic '${service_name}-*'"
-    docker exec "$container" kafka-acls --bootstrap-server kafka-1:19095 \
-        --command-config /tmp/admin.properties \
-        --add --allow-principal "User:$service_name" \
-        --operation All --topic "$service_name-" --resource-pattern-type PREFIXED
-        
-    # Grant All on Group prefixed with service_name
-    log_info "Granting 'All' on Group '${service_name}-*'"
-    docker exec "$container" kafka-acls --bootstrap-server kafka-1:19095 \
-        --command-config /tmp/admin.properties \
-        --add --allow-principal "User:$service_name" \
-        --operation All --group "$service_name-" --resource-pattern-type PREFIXED
-        
-    # Cleanup
-    rm "$admin_props"
-    docker exec -u 0 "$container" rm /tmp/admin.properties
     
     log_info "Kafka ACLs provisioned successfully."
 }

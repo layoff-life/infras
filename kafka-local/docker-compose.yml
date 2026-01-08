@@ -15,20 +15,23 @@ services:
       KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka-1:9093,2@kafka-2:9093,3@kafka-3:9093'
       
       # --- Listeners ---
-      KAFKA_LISTENERS: 'BROKER://:9091,CONTROLLER://:9093,EXTERNAL://:19092,INTERNAL_CLIENT://:19095'
-      KAFKA_ADVERTISED_LISTENERS: 'BROKER://kafka-1:9091,EXTERNAL://localhost:9092,INTERNAL_CLIENT://kafka-1:19095'
+      KAFKA_LISTENERS: 'BROKER://:9091,CONTROLLER://:9093,EXTERNAL://:19092,INTERNAL_CLIENT://:19095,DOCKER_CLIENT://:29095'
+      KAFKA_ADVERTISED_LISTENERS: 'BROKER://kafka-1:9091,EXTERNAL://localhost:9092,INTERNAL_CLIENT://localhost:9095,DOCKER_CLIENT://kafka-1:29095'
       KAFKA_INTER_BROKER_LISTENER_NAME: 'BROKER'
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'BROKER:PLAINTEXT,CONTROLLER:SASL_PLAINTEXT,EXTERNAL:PLAINTEXT,INTERNAL_CLIENT:SASL_PLAINTEXT'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'BROKER:SASL_PLAINTEXT,CONTROLLER:SASL_PLAINTEXT,EXTERNAL:PLAINTEXT,INTERNAL_CLIENT:SASL_PLAINTEXT,DOCKER_CLIENT:SASL_PLAINTEXT'
 
       # --- SASL Auth ---
       KAFKA_SASL_ENABLED_MECHANISMS: 'PLAIN'
       KAFKA_SASL_MECHANISM_CONTROLLER_PROTOCOL: 'PLAIN'
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: 'PLAIN'
+      # Inter-broker client credentials (so this broker authenticates to peers as kafka-1)
+      KAFKA_SASL_JAAS_CONFIG: 'org.apache.kafka.common.security.plain.PlainLoginModule required username="kafka-1" password="${KAFKA_1_PASSWORD}";'
       KAFKA_LISTENER_NAME_CONTROLLER_SASL_JAAS_CONFIG: 'org.apache.kafka.common.security.plain.PlainLoginModule required username="kafka-1" password="${KAFKA_1_PASSWORD}";'
 
       # --- KRaft Settings ---
       KAFKA_AUTHORIZER_CLASS_NAME: org.apache.kafka.metadata.authorizer.StandardAuthorizer
-      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "false"
       KAFKA_SUPER_USERS: User:admin;User:kafka-1;User:kafka-2;User:kafka-3
       KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/kafka_server_jaas.conf"
       CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
@@ -44,7 +47,7 @@ services:
       - |
         if [ ! -f /var/lib/kafka/data/meta.properties ]; then
           echo "Formatting storage..."
-          kafka-storage format -t $CLUSTER_ID -c /etc/kafka/kafka.properties
+          kafka-storage format -t $CLUSTER_ID -c /etc/kafka/server.properties
         fi
         /etc/confluent/docker/run
     volumes:
@@ -63,16 +66,19 @@ services:
       KAFKA_NODE_ID: 2
       KAFKA_PROCESS_ROLES: 'broker,controller'
       KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka-1:9093,2@kafka-2:9093,3@kafka-3:9093'
-      KAFKA_LISTENERS: 'BROKER://:9091,CONTROLLER://:9093,EXTERNAL://:19093,INTERNAL_CLIENT://:19096'
-      KAFKA_ADVERTISED_LISTENERS: 'BROKER://kafka-2:9091,EXTERNAL://localhost:9093,INTERNAL_CLIENT://kafka-2:19096'
+      KAFKA_LISTENERS: 'BROKER://:9091,CONTROLLER://:9093,EXTERNAL://:19093,INTERNAL_CLIENT://:19096,DOCKER_CLIENT://:29096'
+      KAFKA_ADVERTISED_LISTENERS: 'BROKER://kafka-2:9091,EXTERNAL://localhost:9093,INTERNAL_CLIENT://localhost:9096,DOCKER_CLIENT://kafka-2:29096'
       KAFKA_INTER_BROKER_LISTENER_NAME: 'BROKER'
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'BROKER:PLAINTEXT,CONTROLLER:SASL_PLAINTEXT,EXTERNAL:PLAINTEXT,INTERNAL_CLIENT:SASL_PLAINTEXT'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'BROKER:SASL_PLAINTEXT,CONTROLLER:SASL_PLAINTEXT,EXTERNAL:PLAINTEXT,INTERNAL_CLIENT:SASL_PLAINTEXT,DOCKER_CLIENT:SASL_PLAINTEXT'
       KAFKA_SASL_ENABLED_MECHANISMS: 'PLAIN'
       KAFKA_SASL_MECHANISM_CONTROLLER_PROTOCOL: 'PLAIN'
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: 'PLAIN'
+      # Inter-broker client credentials (so this broker authenticates to peers as kafka-2)
+      KAFKA_SASL_JAAS_CONFIG: 'org.apache.kafka.common.security.plain.PlainLoginModule required username="kafka-2" password="${KAFKA_2_PASSWORD}";'
       KAFKA_LISTENER_NAME_CONTROLLER_SASL_JAAS_CONFIG: 'org.apache.kafka.common.security.plain.PlainLoginModule required username="kafka-2" password="${KAFKA_2_PASSWORD}";'
       KAFKA_AUTHORIZER_CLASS_NAME: org.apache.kafka.metadata.authorizer.StandardAuthorizer
-      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "false"
       KAFKA_SUPER_USERS: User:admin;User:kafka-1;User:kafka-2;User:kafka-3
       KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/kafka_server_jaas.conf"
       CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
@@ -88,7 +94,7 @@ services:
       - |
         if [ ! -f /var/lib/kafka/data/meta.properties ]; then
           echo "Formatting storage..."
-          kafka-storage format -t $CLUSTER_ID -c /etc/kafka/kafka.properties
+          kafka-storage format -t $CLUSTER_ID -c /etc/kafka/server.properties
         fi
         /etc/confluent/docker/run
     volumes:
@@ -107,16 +113,19 @@ services:
       KAFKA_NODE_ID: 3
       KAFKA_PROCESS_ROLES: 'broker,controller'
       KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka-1:9093,2@kafka-2:9093,3@kafka-3:9093'
-      KAFKA_LISTENERS: 'BROKER://:9091,CONTROLLER://:9093,EXTERNAL://:19094,INTERNAL_CLIENT://:19097'
-      KAFKA_ADVERTISED_LISTENERS: 'BROKER://kafka-3:9091,EXTERNAL://localhost:9094,INTERNAL_CLIENT://kafka-3:19097'
+      KAFKA_LISTENERS: 'BROKER://:9091,CONTROLLER://:9093,EXTERNAL://:19094,INTERNAL_CLIENT://:19097,DOCKER_CLIENT://:29097'
+      KAFKA_ADVERTISED_LISTENERS: 'BROKER://kafka-3:9091,EXTERNAL://localhost:9094,INTERNAL_CLIENT://localhost:9097,DOCKER_CLIENT://kafka-3:29097'
       KAFKA_INTER_BROKER_LISTENER_NAME: 'BROKER'
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'BROKER:PLAINTEXT,CONTROLLER:SASL_PLAINTEXT,EXTERNAL:PLAINTEXT,INTERNAL_CLIENT:SASL_PLAINTEXT'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'BROKER:SASL_PLAINTEXT,CONTROLLER:SASL_PLAINTEXT,EXTERNAL:PLAINTEXT,INTERNAL_CLIENT:SASL_PLAINTEXT,DOCKER_CLIENT:SASL_PLAINTEXT'
       KAFKA_SASL_ENABLED_MECHANISMS: 'PLAIN'
       KAFKA_SASL_MECHANISM_CONTROLLER_PROTOCOL: 'PLAIN'
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: 'PLAIN'
+      # Inter-broker client credentials (so this broker authenticates to peers as kafka-3)
+      KAFKA_SASL_JAAS_CONFIG: 'org.apache.kafka.common.security.plain.PlainLoginModule required username="kafka-3" password="${KAFKA_3_PASSWORD}";'
       KAFKA_LISTENER_NAME_CONTROLLER_SASL_JAAS_CONFIG: 'org.apache.kafka.common.security.plain.PlainLoginModule required username="kafka-3" password="${KAFKA_3_PASSWORD}";'
       KAFKA_AUTHORIZER_CLASS_NAME: org.apache.kafka.metadata.authorizer.StandardAuthorizer
-      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "false"
       KAFKA_SUPER_USERS: User:admin;User:kafka-1;User:kafka-2;User:kafka-3
       KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/kafka_server_jaas.conf"
       CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
@@ -132,7 +141,7 @@ services:
       - |
         if [ ! -f /var/lib/kafka/data/meta.properties ]; then
           echo "Formatting storage..."
-          kafka-storage format -t $CLUSTER_ID -c /etc/kafka/kafka.properties
+          kafka-storage format -t $CLUSTER_ID -c /etc/kafka/server.properties
         fi
         /etc/confluent/docker/run
     volumes:

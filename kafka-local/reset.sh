@@ -10,6 +10,9 @@ ${ROOT_DIR}/kafka-local/down.sh
 echo "[INFO] Removing data directories..."
 rm -rf "${DATA_DIR_PREFIX}"*-data
 
+echo "[INFO] Removing data credentials..."
+rm -rf ${ROOT_DIR}/kafka-local/kafka_server_jaas.conf
+
 echo "[INFO] Starting kafka-local cluster..."
 ${ROOT_DIR}/kafka-local/up.sh
 

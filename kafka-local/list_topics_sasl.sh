@@ -17,4 +17,4 @@ export KAFKA_OPTS="-Djava.net.preferIPv4Stack=true"
 
 echo "[INFO] Listing topics using local Kafka tools with SASL..."
 # Connect to any of the brokers in the cluster using SASL ports
-$KAFKA_BIN --bootstrap-server localhost:9095,localhost:9096,localhost:9097 --list --command-config ${ROOT_DIR}/kafka-local/client_sasl.properties
+$KAFKA_BIN --bootstrap-server 127.0.0.1:9095,127.0.0.1:9096,127.0.0.1:9097 --list --command-config ${ROOT_DIR}/kafka-local/client_sasl.properties
