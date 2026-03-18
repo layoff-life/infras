@@ -94,13 +94,13 @@ path "secret/*" {
   capabilities = ["create", "read", "update", "delete", "list", "sudo"]
 EOF
 docker cp /tmp/admin-policies.hcl vault-local:/tmp/admin-policies.hcl
-run_vault policy write admin-policy /tmp/admin-policies.hcl
+run_vault policy write admin-policies /tmp/admin-policies.hcl
 rm -f /tmp/admin-policies.hcl
 
 CHOWN_FILE="${ROOT_DIR}/vault_chown.txt"
 if [ ! -f "$CHOWN_FILE" ]; then
     CHOWN_PASS=$(generate_password)
-    run_vault write auth/userpass/users/chown password="$CHOWN_PASS" policies=admin-policy
+    run_vault write auth/userpass/users/chown password="$CHOWN_PASS" policies=admin-policies
     
     cat <<EOF > "$CHOWN_FILE"
 USERNAME: chown
