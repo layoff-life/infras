@@ -13,7 +13,7 @@ usage() {
     echo "Usage: $0 <service_name> <infra_type> [owner_username]"
     echo "  service_name: Name of the service (e.g., 'auth-service', 'payment-service')"
     echo "  infra_type: Type of infrastructure ('app', 'mysql', 'postgres', 'redis', 'kafka', 'keycloak')"
-    echo "  owner_username: (Optional) Used by Keycloak to assign app ownership."
+    echo "  owner_username: Required for 'keycloak' type. Realm/user to scope the client to."
     exit 1
 }
 
@@ -45,6 +45,11 @@ case "$INFRA_TYPE" in
         source "$SCRIPT_DIR/lib/kafka.sh"
         ;;
     keycloak)
+        if [ -z "${OWNER_USERNAME:-}" ]; then
+            log_error "owner_username is required for keycloak type."
+            log_error "Usage: $0 <service_name> keycloak <owner_username>"
+            exit 1
+        fi
         source "$SCRIPT_DIR/lib/keycloak.sh"
         ;;
     *)
