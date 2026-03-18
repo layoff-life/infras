@@ -25,7 +25,8 @@ This process will:
 *   Start a Vault container.
 *   Initialize and unseal Vault.
 *   Save unseal keys and root token to `vault_keys.txt`.
-*   Save unseal keys and root token to `vault_keys.txt`.
+*   Enable `userpass` authentication and create a `chown` admin user.
+*   Save the `chown` UI login credentials to `vault_chown.txt`.
 *   Enables `infras/` and `apps/` secret engines.
 *   **Note**: This script **does not** generate secrets. Services will generate their own secrets upon startup.
 
@@ -84,7 +85,7 @@ Each service directory (`kafka-local`, `mysql-local`, `redis-local`, `vault-loca
 *   `redis-local/`: Redis Cluster configuration.
 *   `volumes/`: Persistent data storage for containers (created automatically).
 *   `vault_keys.txt`: Generated file containing Vault keys (do not commit this).
-*   `vault_keys.txt`: Generated file containing Vault keys (do not commit this).
+*   `vault_chown.txt`: Generated file containing Vault UI login credentials (do not commit this).
 
 ## User & ACL Management
 
