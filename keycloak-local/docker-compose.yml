@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.5
+    platform: linux/amd64
+    container_name: keycloak-local
+    command: start-dev
+    ports:
+      - "18080:8080"
+    environment:
+      KC_FEATURES: admin-fine-grained-authz
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres-local:5432/keycloak
+      KC_DB_USERNAME: ${KEYCLOAK_DB_USERNAME}
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD}
+    volumes:
+      - ../volumes/keycloak-data:/opt/keycloak/data
+    networks:
+      - default
+
+networks:
+  default:
+    name: postgres-local_default
+    external: true

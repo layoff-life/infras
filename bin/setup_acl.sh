@@ -10,18 +10,20 @@ source "$SCRIPT_DIR/lib/common.sh"
 
 # Usage
 usage() {
-    echo "Usage: $0 <service_name> <infra_type>"
+    echo "Usage: $0 <service_name> <infra_type> [owner_username]"
     echo "  service_name: Name of the service (e.g., 'auth-service', 'payment-service')"
-    echo "  infra_type: Type of infrastructure ('mysql', 'postgres', 'redis', 'kafka')"
+    echo "  infra_type: Type of infrastructure ('mysql', 'postgres', 'redis', 'kafka', 'keycloak')"
+    echo "  owner_username: (Optional) Used by Keycloak to assign app ownership."
     exit 1
 }
 
-if [ "$#" -ne 2 ]; then
+if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
     usage
 fi
 
 SERVICE_NAME="$1"
 INFRA_TYPE="$2"
+OWNER_USERNAME="${3:-}"
 
 log_info "Starting ACL setup for service '$SERVICE_NAME' on '$INFRA_TYPE'..."
 
@@ -39,6 +41,9 @@ case "$INFRA_TYPE" in
     kafka)
         source "$SCRIPT_DIR/lib/kafka.sh"
         ;;
+    keycloak)
+        source "$SCRIPT_DIR/lib/keycloak.sh"
+        ;;
     *)
         log_error "Unknown infrastructure type: $INFRA_TYPE"
         usage
@@ -53,14 +58,13 @@ PASSWORD=$(generate_password)
 log_info "Generated password for $SERVICE_NAME"
 
 # Store in Vault (New Path: infras/<infra>/<service>)
-# Store in Vault (New Path: infras/<infra>/<service>)
 VAULT_PATH="infras/${INFRA_TYPE}/${SERVICE_NAME}"
 store_credential "$VAULT_PATH" "$SERVICE_NAME" "$PASSWORD"
 log_info "Stored credential (username/password) in Vault at $VAULT_PATH"
 
 # Execute Infrastructure Specific Setup
-# Each lib script must implement a function 'create_acl <service_name> <password>'
-create_acl "$SERVICE_NAME" "$PASSWORD"
+# Each lib script must implement a function 'create_acl <service_name> <password> [owner_username]'
+create_acl "$SERVICE_NAME" "$PASSWORD" "$OWNER_USERNAME"
 
 # Create Policy and Token
 create_policy "$SERVICE_NAME"
