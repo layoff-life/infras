@@ -33,9 +33,9 @@ check_vault() {
 
 check_vault_mount() {
     local mount=$1
-    if ! docker exec -e VAULT_TOKEN="$VAULT_TOKEN" vault-local vault secrets list | grep -q "${mount}/"; then
+    if ! docker exec -e VAULT_TOKEN="${VAULT_TOKEN:-}" vault-local vault secrets list | grep -q "${mount}/"; then
         log_info "Vault mount '$mount/' seems missing. Attempting to enable..."
-        docker exec -e VAULT_TOKEN="$VAULT_TOKEN" vault-local vault secrets enable -path="$mount" kv >/dev/null 2>&1 || true
+        docker exec -e VAULT_TOKEN="${VAULT_TOKEN:-}" vault-local vault secrets enable -path="$mount" kv >/dev/null 2>&1 || true
     fi
 }
 
@@ -62,7 +62,7 @@ fetch_secret() {
         secret_path="${path#secret/}"
     fi
 
-    docker exec -e VAULT_TOKEN="$VAULT_TOKEN" vault-local vault kv get -mount="$mount" -field="$field" "$secret_path"
+    docker exec -e VAULT_TOKEN="${VAULT_TOKEN:-}" vault-local vault kv get -mount="$mount" -field="$field" "$secret_path"
 }
 
 store_secret() {
@@ -89,7 +89,7 @@ store_secret() {
         check_vault_mount "$mount"
     fi
 
-    docker exec -e VAULT_TOKEN="$VAULT_TOKEN" vault-local vault kv put -mount="$mount" "$secret_path" "$key"="$value" > /dev/null
+    docker exec -e VAULT_TOKEN="${VAULT_TOKEN:-}" vault-local vault kv put -mount="$mount" "$secret_path" "$key"="$value" > /dev/null
 }
 
 store_credential() {
@@ -116,7 +116,7 @@ store_credential() {
         check_vault_mount "$mount"
     fi
 
-    docker exec -e VAULT_TOKEN="$VAULT_TOKEN" vault-local vault kv put -mount="$mount" "$secret_path" username="$username" password="$password" > /dev/null
+    docker exec -e VAULT_TOKEN="${VAULT_TOKEN:-}" vault-local vault kv put -mount="$mount" "$secret_path" username="$username" password="$password" > /dev/null
 }
 
 ensure_credential() {
@@ -142,23 +142,44 @@ create_policy() {
     local app_name=$1
     local policy_name="app-${app_name}"
     
-    # Create policy file content
-    # Support both KV v1 and v2 paths to be robust
+    # KV v2 requires:
+    # - list on metadata at EVERY parent level for UI navigation
+    # - read on data paths to actually read values
     local policy_content="
-# Apps (v1 + v2)
+# Allow UI to list top-level mounts (needed for Vault UI navigation)
+path \"apps/metadata/\" { capabilities = [\"list\"] }
+path \"infras/metadata/\" { capabilities = [\"list\"] }
+
+# Allow listing and reading the specific app's secrets
 path \"apps/data/${app_name}\" { capabilities = [\"read\", \"list\"] }
 path \"apps/metadata/${app_name}\" { capabilities = [\"read\", \"list\"] }
 path \"apps/data/${app_name}/*\" { capabilities = [\"read\", \"list\"] }
+path \"apps/metadata/${app_name}/*\" { capabilities = [\"read\", \"list\"] }
 
-# Infras (v1 + v2)
-path \"infras/+/${app_name}\" { capabilities = [\"read\", \"list\"] }
-path \"infras/+/${app_name}/*\" { capabilities = [\"read\", \"list\"] }
+# Allow reading infra secrets scoped to this app
+path \"infras/metadata/+/\" { capabilities = [\"list\"] }
 path \"infras/data/+/${app_name}\" { capabilities = [\"read\", \"list\"] }
+path \"infras/metadata/+/${app_name}\" { capabilities = [\"read\", \"list\"] }
 path \"infras/data/+/${app_name}/*\" { capabilities = [\"read\", \"list\"] }
+path \"infras/metadata/+/${app_name}/*\" { capabilities = [\"read\", \"list\"] }
 "
     
     log_info "Creating/Updating Vault policy '$policy_name'..."
-    docker exec -i -e VAULT_TOKEN="$VAULT_TOKEN" vault-local vault policy write "$policy_name" - <<< "$policy_content" > /dev/null
+    docker exec -i -e VAULT_TOKEN="${VAULT_TOKEN:-}" vault-local vault policy write "$policy_name" - <<< "$policy_content" > /dev/null
+}
+
+create_modify_policy() {
+    local app_name=$1
+    local policy_name="modify-${app_name}"
+
+    local policy_content="
+# Write access to app '$app_name' secrets (for human users, not service tokens)
+path \"apps/data/${app_name}\" { capabilities = [\"create\", \"update\", \"delete\"] }
+path \"apps/data/${app_name}/*\" { capabilities = [\"create\", \"update\", \"delete\"] }
+"
+
+    log_info "Creating/Updating Vault policy '$policy_name'..."
+    docker exec -i -e VAULT_TOKEN="${VAULT_TOKEN:-}" vault-local vault policy write "$policy_name" - <<< "$policy_content" > /dev/null
 }
 
 create_token() {
@@ -169,7 +190,7 @@ create_token() {
     
     # Create token with policy
     # -format=json to parse token
-    local token_json=$(docker exec -e VAULT_TOKEN="$VAULT_TOKEN" vault-local vault token create -policy="$policy_name" -format=json)
+    local token_json=$(docker exec -e VAULT_TOKEN="${VAULT_TOKEN:-}" vault-local vault token create -policy="$policy_name" -format=json)
     local token=$(echo "$token_json" | jq -r ".auth.client_token")
     
     echo "$token"

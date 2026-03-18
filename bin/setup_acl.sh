@@ -12,7 +12,7 @@ source "$SCRIPT_DIR/lib/common.sh"
 usage() {
     echo "Usage: $0 <service_name> <infra_type> [owner_username]"
     echo "  service_name: Name of the service (e.g., 'auth-service', 'payment-service')"
-    echo "  infra_type: Type of infrastructure ('mysql', 'postgres', 'redis', 'kafka', 'keycloak')"
+    echo "  infra_type: Type of infrastructure ('app', 'mysql', 'postgres', 'redis', 'kafka', 'keycloak')"
     echo "  owner_username: (Optional) Used by Keycloak to assign app ownership."
     exit 1
 }
@@ -29,6 +29,9 @@ log_info "Starting ACL setup for service '$SERVICE_NAME' on '$INFRA_TYPE'..."
 
 # Validate Infra Type
 case "$INFRA_TYPE" in
+    app)
+        source "$SCRIPT_DIR/lib/app.sh"
+        ;;
     mysql)
         source "$SCRIPT_DIR/lib/mysql.sh"
         ;;
@@ -53,20 +56,25 @@ esac
 # Check Vault
 check_vault
 
-# Generate Password
-PASSWORD=$(generate_password)
-log_info "Generated password for $SERVICE_NAME"
+# Generate Password (not used by 'app' type but kept for other infra types)
+if [ "$INFRA_TYPE" != "app" ]; then
+    PASSWORD=$(generate_password)
+    log_info "Generated password for $SERVICE_NAME"
 
-# Store in Vault (New Path: infras/<infra>/<service>)
-VAULT_PATH="infras/${INFRA_TYPE}/${SERVICE_NAME}"
-store_credential "$VAULT_PATH" "$SERVICE_NAME" "$PASSWORD"
-log_info "Stored credential (username/password) in Vault at $VAULT_PATH"
+    # Store in Vault (infras/<infra>/<service>)
+    VAULT_PATH="infras/${INFRA_TYPE}/${SERVICE_NAME}"
+    store_credential "$VAULT_PATH" "$SERVICE_NAME" "$PASSWORD"
+    log_info "Stored credential (username/password) in Vault at $VAULT_PATH"
+else
+    PASSWORD=""
+    VAULT_PATH="apps/${SERVICE_NAME}/${SERVICE_NAME}"
+    create_modify_policy "$SERVICE_NAME"
+fi
 
 # Execute Infrastructure Specific Setup
-# Each lib script must implement a function 'create_acl <service_name> <password> [owner_username]'
 create_acl "$SERVICE_NAME" "$PASSWORD" "$OWNER_USERNAME"
 
-# Create Policy and Token
+# Create Policy, Modify Policy, and Token
 create_policy "$SERVICE_NAME"
 TOKEN=$(create_token "$SERVICE_NAME")
 
