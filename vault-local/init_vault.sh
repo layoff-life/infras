@@ -92,6 +92,7 @@ path "sys/health" {
 # Full access to all secrets engines
 path "secret/*" {
   capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+}
 EOF
 docker cp /tmp/admin-policies.hcl vault-local:/tmp/admin-policies.hcl
 run_vault policy write admin-policies /tmp/admin-policies.hcl
