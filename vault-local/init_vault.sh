@@ -76,14 +76,26 @@ if ! run_vault auth list -format=json | jq -e '."userpass/"' > /dev/null; then
 fi
 
 # Create a master admin policy for chown
-cat <<EOF > /tmp/admin-policy.hcl
+cat <<EOF > /tmp/admin-policies.hcl
+# Full admin policy - grants access to all operations
+
+# Allow all operations on all paths
 path "*" {
   capabilities = ["create", "read", "update", "delete", "list", "sudo"]
 }
+
+# System health checks
+path "sys/health" {
+  capabilities = ["read", "sudo"]
+}
+
+# Full access to all secrets engines
+path "secret/*" {
+  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
 EOF
-docker cp /tmp/admin-policy.hcl vault-local:/tmp/admin-policy.hcl
-run_vault policy write admin-policy /tmp/admin-policy.hcl
-rm -f /tmp/admin-policy.hcl
+docker cp /tmp/admin-policies.hcl vault-local:/tmp/admin-policies.hcl
+run_vault policy write admin-policy /tmp/admin-policies.hcl
+rm -f /tmp/admin-policies.hcl
 
 CHOWN_FILE="${ROOT_DIR}/vault_chown.txt"
 if [ ! -f "$CHOWN_FILE" ]; then

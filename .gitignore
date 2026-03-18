@@ -5,3 +5,4 @@ vault_keys.txt
 *.env
 .DS_Store
 *.log
+vault_chown.txt
