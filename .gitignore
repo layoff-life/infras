@@ -6,3 +6,4 @@ vault_keys.txt
 .DS_Store
 *.log
 vault_chown.txt
+volumes/minikube/
