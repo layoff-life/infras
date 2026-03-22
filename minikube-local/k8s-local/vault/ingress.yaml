@@ -1,0 +1,30 @@
+---
+# Vault Ingress Route
+# Access via: http://vault.local:8080 or https://vault.yourdomain.com
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vault-ingress
+  namespace: infras-vault
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    nginx.ingress.kubernetes.io/proxy-body-size: "128m"
+    # Vault Websocket support for UI
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/upgrade: $http_upgrade
+    nginx.ingress.kubernetes.io/connection: "upgrade"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: vault.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: vault
+            port:
+              number: 8200

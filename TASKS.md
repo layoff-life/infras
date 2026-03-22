@@ -57,15 +57,15 @@ This document tracks all tasks for the Docker Compose to MiniKube migration with
 
 | ID | Task | Status | Dependencies | Priority |
 |----|------|--------|--------------|----------|
-| [P2-001] | Create Vault StatefulSet manifest (0.5CPU, 1GB RAM) | ⏳ TODO | [P1-003] | High |
-| [P2-002] | Create Vault config.hcl ConfigMap | ⏳ TODO | [P2-001] | High |
-| [P2-003] | Create Vault services (ClusterIP, NodePort) | ⏳ TODO | [P2-001] | High |
-| [P2-004] | Create Vault PVC for data persistence (10Gi) | ⏳ TODO | [P2-001] | High |
-| [P2-005] | Deploy Vault to infras-vault namespace | ⏳ TODO | [P2-002], [P2-003], [P2-004] | High |
-| [P2-006] | Initialize Vault and save unseal keys and root token | ⏳ TODO | [P2-005] | High |
-| [P2-007] | Enable KV v2 secrets engines (infras, apps) | ⏳ TODO | [P2-006] | High |
-| [P2-008] | Enable userpass auth method | ⏳ TODO | [P2-006] | High |
-| [P2-009] | Store Vault root token in Secret for init containers | ⏳ TODO | [P2-006] | High |
+| [P2-001] | Create Vault StatefulSet manifest (0.5CPU, 1GB RAM) | ✅ DONE | [P1-003] | High |
+| [P2-002] | Create Vault config.hcl ConfigMap | ✅ DONE | [P2-001] | High |
+| [P2-003] | Create Vault services (ClusterIP, NodePort) | ✅ DONE | [P2-001] | High |
+| [P2-004] | Create Vault PVC for data persistence (10Gi) | ✅ DONE | [P2-001] | High |
+| [P2-005] | Deploy Vault to infras-vault namespace | ✅ DONE | [P2-002], [P2-003], [P2-004] | High |
+| [P2-006] | Initialize Vault and save unseal keys and root token | ✅ DONE | [P2-005] | High |
+| [P2-007] | Enable KV v2 secrets engines (infras, apps) | ✅ DONE | [P2-006] | High |
+| [P2-008] | Enable userpass auth method | ✅ DONE | [P2-006] | High |
+| [P2-009] | Store Vault root token in Secret for init containers | ✅ DONE | [P2-006] | High |
 
 ### MySQL
 
@@ -251,10 +251,10 @@ This document tracks all tasks for the Docker Compose to MiniKube migration with
 - Medium: 32 tasks
 
 **Current Status:**
-- ⏳ TODO: 102 tasks
+- ⏳ TODO: 93 tasks
 - 🚧 IN_PROGRESS: 0 tasks
 - 🧪 READY_FOR_TEST: 2 tasks
-- ✅ DONE: 1 task
+- ✅ DONE: 10 tasks
 - ⏸️ BLOCKED: 0 tasks
 - ❌ CANCELLED: 0 tasks
 

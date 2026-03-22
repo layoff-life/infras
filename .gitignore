@@ -7,3 +7,6 @@ vault_keys.txt
 *.log
 vault_chown.txt
 volumes/minikube/
+
+# Vault initialization files (sensitive)
+minikube-local/k8s-local/.vault-init/

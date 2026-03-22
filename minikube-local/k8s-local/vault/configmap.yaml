@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-config
+  namespace: infras-vault
+  labels:
+    app: vault
+    component: config
+data:
+  config.hcl: |
+    # Vault configuration for local MiniKube environment
+    # This configuration uses file backend for simplicity in development
+
+    # Listener configuration
+    listener "tcp" {
+      address       = "0.0.0.0:8200"
+      cluster_address = "0.0.0.0:8201"
+      tls_disable  = "true"
+      tls_cert_file = "/etc/vault/tls/server.crt"
+      tls_key_file  = "/etc/vault/tls/server.key"
+    }
+
+    # Storage backend - file storage for local development
+    storage "file" {
+      path = "/vault/file"
+    }
+
+    # API configuration
+    api_addr = "http://0.0.0.0:8200"
+    cluster_addr = "https://0.0.0.0:8201"
+
+    # Disable mlock (for development in containers)
+    disable_mlock = true
+
+    # UI configuration
+    ui = true
+
+    # Cluster configuration (for future scaling)
+    cluster_name = "vault"
+
+    # Log level
+    log_level = "info"
+
+    # PID file
+    pid_file = "/home/vault/vault.pid"
+
+    # Maximum lease duration
+    default_lease_ttl = "720h"
+    max_lease_ttl = "720h"

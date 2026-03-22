@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault
+  namespace: infras-vault
+  labels:
+    app: vault
+    component: core
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8200
+    targetPort: 8200
+    protocol: TCP
+  - name: cluster-addr
+    port: 8201
+    targetPort: 8201
+    protocol: TCP
+  selector:
+    app: vault
+    component: core
+  sessionAffinity: None
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault-nodeport
+  namespace: infras-vault
+  labels:
+    app: vault
+    component: core
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: 8200
+    targetPort: 8200
+    nodePort: 30200
+    protocol: TCP
+  selector:
+    app: vault
+    component: core
+  sessionAffinity: None
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault-headless
+  namespace: infras-vault
+  labels:
+    app: vault
+    component: core
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: http
+    port: 8200
+    targetPort: 8200
+    protocol: TCP
+  - name: cluster-addr
+    port: 8201
+    targetPort: 8201
+    protocol: TCP
+  selector:
+    app: vault
+    component: core
+  publishNotReadyAddresses: true
