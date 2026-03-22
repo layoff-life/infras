@@ -1,0 +1,154 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: docker-stats-exporter
+  namespace: infras-monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: docker-stats-exporter
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: docker-stats-exporter
+subjects:
+- kind: ServiceAccount
+  name: docker-stats-exporter
+  namespace: infras-monitoring
+roleRef:
+  kind: ClusterRole
+  name: docker-stats-exporter
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: docker-stats-exporter
+  namespace: infras-monitoring
+  labels:
+    app: docker-stats-exporter
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9101"
+    prometheus.io/path: "/metrics"
+spec:
+  clusterIP: None
+  ports:
+  - name: metrics
+    port: 9101
+    targetPort: metrics
+    protocol: TCP
+  selector:
+    app: docker-stats-exporter
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docker-stats-exporter
+  namespace: infras-monitoring
+  labels:
+    app: docker-stats-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: docker-stats-exporter
+  template:
+    metadata:
+      labels:
+        app: docker-stats-exporter
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9101"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: docker-stats-exporter
+      hostNetwork: true
+      containers:
+      - name: exporter
+        image: docker:27.3.1-cli
+        command:
+        - /bin/sh
+        - -c
+        - |
+          apk add --no-cache curl bc
+
+          # Start a simple HTTP server for metrics
+          while true; do
+            # Get docker stats
+            CPU=$(docker stats minikube --no-stream --format "{{.CPUPerc}}" 2>/dev/null | sed 's/%//')
+            MEM_FULL=$(docker stats minikube --no-stream --format "{{.MemUsage}}" 2>/dev/null)
+            MEM_USAGE=$(echo "$MEM_FULL" | grep -oP '^\d[\d.]*' 2>/dev/null)
+            MEM_UNIT=$(echo "$MEM_FULL" | grep -oP '\d[\d.]*\s*\K[MG]iB' | head -1 2>/dev/null)
+            MEM_PERCENT=$(docker stats minikube --no-stream --format "{{.MemPerc}}" 2>/dev/null | sed 's/%//')
+
+            # Convert to bytes
+            if [ "$MEM_UNIT" = "GiB" ]; then
+              MEM_BYTES=$(echo "$MEM_USAGE * 1024 * 1024 * 1024" | bc 2>/dev/null | cut -d'.' -f1)
+            else
+              MEM_BYTES=$(echo "$MEM_USAGE * 1024 * 1024" | bc 2>/dev/null | cut -d'.' -f1)
+            fi
+
+            # Generate metrics
+            cat > /metrics/prometheus <<EOF
+          # HELP docker_cpu_percent CPU percentage used by minikube container from host perspective
+          # TYPE docker_cpu_percent gauge
+          docker_cpu_percent{container="minikube"} ${CPU:-0}
+
+          # HELP docker_memory_bytes Memory used by minikube container in bytes from host perspective
+          # TYPE docker_memory_bytes gauge
+          docker_memory_bytes{container="minikube"} ${MEM_BYTES:-0}
+
+          # HELP docker_memory_percent Memory percentage used by minikube container from host perspective
+          # TYPE docker_memory_percent gauge
+          docker_memory_percent{container="minikube"} ${MEM_PERCENT:-0}
+
+          # HELP docker_stats_up Whether docker stats collection is working
+          # TYPE docker_stats_up gauge
+          docker_stats_up{container="minikube"} 1
+          EOF
+
+            sleep 15
+          done
+        volumeMounts:
+        - name: docker-sock
+          mountPath: /var/run/docker.sock
+        - name: metrics
+          mountPath: /metrics
+        resources:
+          requests:
+            cpu: 50m
+            memory: 50Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+      - name: server
+        image: python:3.12-slim
+        command:
+        - sh
+        - -c
+        - |
+          cd /metrics && python3 -m http.server 9101
+        volumeMounts:
+        - name: metrics
+          mountPath: /metrics
+        resources:
+          requests:
+            cpu: 50m
+            memory: 50Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+      volumes:
+      - name: docker-sock
+        hostPath:
+          path: /var/run/docker.sock
+      - name: metrics
+        emptyDir: {}

@@ -1,0 +1,113 @@
+---
+# Resource Quota for infras-vault namespace
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: vault-resource-quota
+  namespace: infras-vault
+spec:
+  hard:
+    requests.cpu: "500m"
+    requests.memory: "512Mi"
+    limits.cpu: "500m"
+    limits.memory: "1Gi"
+    persistentvolumeclaims: "2"
+---
+# Resource Quota for infras-kafka namespace
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: kafka-resource-quota
+  namespace: infras-kafka
+spec:
+  hard:
+    requests.cpu: "2"
+    requests.memory: "2Gi"
+    limits.cpu: "2"
+    limits.memory: "3Gi"
+    persistentvolumeclaims: "3"
+---
+# Resource Quota for infras-mysql namespace
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: mysql-resource-quota
+  namespace: infras-mysql
+spec:
+  hard:
+    requests.cpu: "500m"
+    requests.memory: "512Mi"
+    limits.cpu: "500m"
+    limits.memory: "1Gi"
+    persistentvolumeclaims: "2"
+---
+# Resource Quota for infras-postgres namespace
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: postgres-resource-quota
+  namespace: infras-postgres
+spec:
+  hard:
+    requests.cpu: "500m"
+    requests.memory: "512Mi"
+    limits.cpu: "500m"
+    limits.memory: "1Gi"
+    persistentvolumeclaims: "2"
+---
+# Resource Quota for infras-redis namespace
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: redis-resource-quota
+  namespace: infras-redis
+spec:
+  hard:
+    requests.cpu: "1"
+    requests.memory: "1Gi"
+    limits.cpu: "1"
+    limits.memory: "2Gi"
+    persistentvolumeclaims: "3"
+---
+# Resource Quota for infras-keycloak namespace
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: keycloak-resource-quota
+  namespace: infras-keycloak
+spec:
+  hard:
+    requests.cpu: "500m"
+    requests.memory: "512Mi"
+    limits.cpu: "500m"
+    limits.memory: "1Gi"
+    persistentvolumeclaims: "2"
+---
+# Resource Quota for infras-monitoring namespace
+# Updated to accommodate Prometheus, Grafana, kube-state-metrics, node-exporter
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: monitoring-resource-quota
+  namespace: infras-monitoring
+spec:
+  hard:
+    requests.cpu: "3"
+    requests.memory: "4Gi"
+    limits.cpu: "3"
+    limits.memory: "7Gi"
+    persistentvolumeclaims: "5"
+---
+# Resource Quota for infras-management namespace
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: management-resource-quota
+  namespace: infras-management
+spec:
+  hard:
+    requests.cpu: "500m"
+    requests.memory: "256Mi"
+    limits.cpu: "500m"
+    limits.memory: "1Gi"
+    persistentvolumeclaims: "1"
