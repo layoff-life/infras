@@ -83,13 +83,13 @@ This document tracks all tasks for the Docker Compose to MiniKube migration with
 
 | ID | Task | Status | Dependencies | Priority |
 |----|------|--------|--------------|----------|
-| [P2-017] | Create PostgreSQL Deployment manifest (0.5CPU, 1GB RAM) | ⏳ TODO | [P2-009] | High |
-| [P2-018] | Create PostgreSQL postgresql.conf ConfigMap | ⏳ TODO | [P2-017] | Medium |
-| [P2-019] | Create PostgreSQL init container to fetch admin password from Vault | ⏳ TODO | [P2-017], [P2-009] | High |
-| [P2-020] | Create PostgreSQL PVC for data persistence (5Gi) | ⏳ TODO | [P2-017] | High |
-| [P2-021] | Create PostgreSQL exporter sidecar manifest | ⏳ TODO | [P2-017] | Medium |
-| [P2-022] | Deploy PostgreSQL to infras-postgres namespace | ⏳ TODO | [P2-018], [P2-019], [P2-020], [P2-021] | High |
-| [P2-023] | Test PostgreSQL connectivity and metrics | ⏳ TODO | [P2-022] | High |
+| [P2-017] | Create PostgreSQL Deployment manifest (0.5CPU, 1GB RAM) | ✅ DONE | [P2-009] | High |
+| [P2-018] | Create PostgreSQL postgresql.conf ConfigMap | ✅ DONE | [P2-017] | Medium |
+| [P2-019] | Create PostgreSQL init container to fetch admin password from Vault | ✅ DONE | [P2-017], [P2-009] | High |
+| [P2-020] | Create PostgreSQL PVC for data persistence (5Gi) | ✅ DONE | [P2-017] | High |
+| [P2-021] | Create PostgreSQL exporter sidecar manifest | ✅ DONE | [P2-017] | Medium |
+| [P2-022] | Deploy PostgreSQL to infras-postgres namespace | ✅ DONE | [P2-018], [P2-019], [P2-020], [P2-021] | High |
+| [P2-023] | Test PostgreSQL connectivity and metrics | ✅ DONE | [P2-022] | High |
 
 ---
 
@@ -251,10 +251,10 @@ This document tracks all tasks for the Docker Compose to MiniKube migration with
 - Medium: 32 tasks
 
 **Current Status:**
-- ⏳ TODO: 93 tasks
+- ⏳ TODO: 86 tasks
 - 🚧 IN_PROGRESS: 0 tasks
 - 🧪 READY_FOR_TEST: 2 tasks
-- ✅ DONE: 10 tasks
+- ✅ DONE: 17 tasks
 - ⏸️ BLOCKED: 0 tasks
 - ❌ CANCELLED: 0 tasks
 

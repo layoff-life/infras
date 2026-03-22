@@ -5,8 +5,8 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VAULT_DIR="$(dirname "$SCRIPT_DIR")"
-OUTPUT_DIR="$VAULT_DIR/.vault-init"
+K8S_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
+OUTPUT_DIR="$K8S_DIR/.vault-init"
 OUTPUT_FILE="$OUTPUT_DIR/cluster-keys.json"
 
 echo "╔════════════════════════════════════════════════════════════╗"

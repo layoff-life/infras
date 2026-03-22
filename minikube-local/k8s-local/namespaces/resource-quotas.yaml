@@ -42,6 +42,7 @@ spec:
     persistentvolumeclaims: "2"
 ---
 # Resource Quota for infras-postgres namespace
+# Adjusted for 200 connections, prepared transactions, and exporter sidecar
 apiVersion: v1
 kind: ResourceQuota
 metadata:
@@ -49,10 +50,10 @@ metadata:
   namespace: infras-postgres
 spec:
   hard:
-    requests.cpu: "500m"
-    requests.memory: "512Mi"
-    limits.cpu: "500m"
-    limits.memory: "1Gi"
+    requests.cpu: "1"
+    requests.memory: "1Gi"
+    limits.cpu: "1"
+    limits.memory: "2Gi"
     persistentvolumeclaims: "2"
 ---
 # Resource Quota for infras-redis namespace
