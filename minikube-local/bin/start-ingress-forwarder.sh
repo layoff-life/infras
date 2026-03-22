@@ -19,16 +19,20 @@ fi
 docker stop minikube-ingress-forwarder 2>/dev/null || true
 docker rm minikube-ingress-forwarder 2>/dev/null || true
 
-# Start new forwarder
+# Start new forwarder with resource limits
 docker run -d \
     --name minikube-ingress-forwarder \
     --network "$MINIKUBE_NETWORK" \
     -p 8080:8080 \
+    --cpus="0.5" \
+    --memory="100m" \
     --restart unless-stopped \
     alpine/socat \
     TCP-LISTEN:8080,fork,reuseaddr TCP:${MINIKUBE_IP}:30559
 
 echo "✅ Ingress forwarder started on port 8080"
+echo "   CPU limit: 0.5 cores"
+echo "   Memory limit: 100MB"
 echo ""
 echo "Check status: docker ps | grep minikube-ingress-forwarder"
 echo "View logs: docker logs minikube-ingress-forwarder"
