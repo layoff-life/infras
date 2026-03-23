@@ -53,8 +53,7 @@ spec:
           mountPath: /etc/grafana/provisioning/dashboards/providers.yaml
           subPath: providers.yaml
         - name: grafana-dashboards
-          mountPath: /var/lib/grafana/dashboards/cluster-overview.json
-          subPath: cluster-overview.json
+          mountPath: /var/lib/grafana/dashboards
         readinessProbe:
           httpGet:
             path: /api/health
