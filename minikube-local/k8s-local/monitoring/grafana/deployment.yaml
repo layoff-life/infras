@@ -73,5 +73,11 @@ spec:
         configMap:
           name: grafana-config
       - name: grafana-dashboards
-        configMap:
-          name: grafana-dashboards
+        projected:
+          sources:
+          - configMap:
+              name: grafana-dashboard-k8s
+          - configMap:
+              name: grafana-dashboard-node
+          - configMap:
+              name: grafana-dashboard-docker
