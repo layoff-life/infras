@@ -136,35 +136,42 @@ This document tracks all tasks for the Docker Compose to MiniKube migration with
 
 ## Phase 4: Application Development
 
+> **Architecture Decision:** Use `kubectl exec` to interact with services instead of direct Python database drivers.
+> - **Simpler:** No need to manage database driver dependencies, connection pooling, or version compatibility
+> - **Reliable:** Uses the same CLI tools already installed and working in the containers
+> - **Consistent:** Follows the same pattern as the existing bash scripts
+> - **Required Dependencies:** `hvac` (Vault), `kubernetes` (K8s API), `requests` (Keycloak HTTP API)
+> - **NOT Required:** mysql-connector-python, psycopg2-binary, redis, confluent-kafka
+
 ### Project Setup
 
 | ID | Task | Status | Dependencies | Priority |
 |----|------|--------|--------------|----------|
-| [P4-001] | Create infras-cli Python project structure | ⏳ TODO | [P3-022] | High |
-| [P4-002] | Create pyproject.toml with dependencies (FastAPI, Typer, hvac, kubernetes, etc.) | ⏳ TODO | [P4-001] | High |
+| [P4-001] | Create infras-cli Python project structure | ✅ DONE | [P3-022] | High |
+| [P4-002] | Create pyproject.toml with dependencies (FastAPI, Typer, hvac, kubernetes, requests) - NO DB drivers needed | ✅ DONE | [P4-001] | High |
 
 ### Core Services
 
 | ID | Task | Status | Dependencies | Priority |
 |----|------|--------|--------------|----------|
-| [P4-003] | Implement Vault service (vault_service.py) with hvac client | ⏳ TODO | [P4-002] | High |
-| [P4-004] | Implement Kubernetes operations (k8s/operations.py) | ⏳ TODO | [P4-002] | High |
-| [P4-005] | Implement CLI framework with Typer (main.py) | ⏳ TODO | [P4-002] | High |
-| [P4-006] | Implement FastAPI REST API endpoints (main.py) | ⏳ TODO | [P4-005] | High |
-| [P4-007] | Implement structured logging with structlog | ⏳ TODO | [P4-002] | Medium |
-| [P4-008] | Implement input validation with Pydantic | ⏳ TODO | [P4-002] | Medium |
+| [P4-003] | Implement Vault service (vault_service.py) with hvac client | ✅ DONE | [P4-002] | High |
+| [P4-004] | Implement Kubernetes operations (k8s/operations.py) | ✅ DONE | [P4-002] | High |
+| [P4-005] | Implement CLI framework with Typer (main.py) | ✅ DONE | [P4-002] | High |
+| [P4-006] | Implement FastAPI REST API endpoints (main.py) | ✅ DONE | [P4-005] | High |
+| [P4-007] | Implement structured logging with structlog | ✅ DONE | [P4-002] | Medium |
+| [P4-008] | Implement input validation with Pydantic | ✅ DONE | [P4-002] | Medium |
 
 ### Infrastructure Service Implementations
 
 | ID | Task | Status | Dependencies | Priority |
 |----|------|--------|--------------|----------|
-| [P4-009] | Implement MySQL service (mysql_service.py) | ⏳ TODO | [P4-003], [P4-004] | High |
-| [P4-010] | Implement PostgreSQL service (postgres_service.py) | ⏳ TODO | [P4-003], [P4-004] | High |
-| [P4-011] | Implement Redis service (redis_service.py) | ⏳ TODO | [P4-003], [P4-004] | High |
-| [P4-012] | Implement Kafka service (kafka_service.py) | ⏳ TODO | [P4-003], [P4-004] | High |
-| [P4-013] | Implement Keycloak service (keycloak_service.py) | ⏳ TODO | [P4-003], [P4-004] | High |
-| [P4-014] | Implement user management (create Vault userpass users) | ⏳ TODO | [P4-003] | High |
-| [P4-015] | Implement policy assignment (assign app policies to users) | ⏳ TODO | [P4-003] | High |
+| [P4-009] | Implement MySQL service (mysql_service.py) | ✅ DONE | [P4-003], [P4-004] | High |
+| [P4-010] | Implement PostgreSQL service (postgres_service.py) | ✅ DONE | [P4-003], [P4-004] | High |
+| [P4-011] | Implement Redis service (redis_service.py) | ✅ DONE | [P4-003], [P4-004] | High |
+| [P4-012] | Implement Kafka service (kafka_service.py) | ✅ DONE | [P4-003], [P4-004] | High |
+| [P4-013] | Implement Keycloak service (keycloak_service.py) | ✅ DONE | [P4-003], [P4-004] | High |
+| [P4-014] | Implement user management (create Vault userpass users) | ✅ DONE | [P4-003] | High |
+| [P4-015] | Implement policy assignment (assign app policies to users) | ✅ DONE | [P4-003] | High |
 
 ### Testing
 
@@ -251,10 +258,10 @@ This document tracks all tasks for the Docker Compose to MiniKube migration with
 - Medium: 32 tasks
 
 **Current Status:**
-- ⏳ TODO: 86 tasks
+- ⏳ TODO: 69 tasks
 - 🚧 IN_PROGRESS: 0 tasks
 - 🧪 READY_FOR_TEST: 2 tasks
-- ✅ DONE: 17 tasks
+- ✅ DONE: 34 tasks
 - ⏸️ BLOCKED: 0 tasks
 - ❌ CANCELLED: 0 tasks
 
