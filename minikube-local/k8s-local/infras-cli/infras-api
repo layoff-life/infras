@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+"""Infras-CLI API Server"""
+
+import sys
+import os
+import subprocess
+from pathlib import Path
+
+# Add project root to Python path
+_project_root = Path(__file__).resolve().parent
+if str(_project_root) not in sys.path:
+    sys.path.insert(0, str(_project_root))
+
+# Auto-configure Vault environment
+# Only set if not already provided by user
+if "VAULT_ADDR" not in os.environ:
+    try:
+        # Get minikube IP
+        minikube_ip = subprocess.check_output(
+            ["minikube", "ip"],
+            stderr=subprocess.DEVNULL,
+            text=True
+        ).strip()
+        os.environ["VAULT_ADDR"] = f"http://{minikube_ip}:30200"
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # Fallback to cluster service DNS
+        os.environ["VAULT_ADDR"] = "http://vault.infras-vault.svc.cluster.local:8200"
+
+if "VAULT_TOKEN" not in os.environ:
+    try:
+        # Fetch Vault root token from Kubernetes secret
+        vault_token = subprocess.check_output(
+            ["kubectl", "get", "secret", "vault-root-token",
+             "-n", "infras-vault",
+             "-o", "jsonpath={.data.token}"],
+            stderr=subprocess.DEVNULL,
+            text=True
+        ).strip()
+
+        # Decode base64
+        import base64
+        os.environ["VAULT_TOKEN"] = base64.b64decode(vault_token).decode('utf-8')
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # No token available - will fail when trying to use Vault
+        pass
+
+# Run the API server
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
