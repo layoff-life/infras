@@ -6,7 +6,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VAULT_DIR="$(dirname "$SCRIPT_DIR")"
-OUTPUT_DIR="$VAULT_DIR/.vault-init"
+OUTPUT_DIR="$VAULT_DIR/../.vault-init"
 ROOT_TOKEN_FILE="$OUTPUT_DIR/root-token.txt"
 
 echo "╔════════════════════════════════════════════════════════════╗"
@@ -94,6 +94,12 @@ echo ""
 
 POLICY_DIR="$(dirname "$SCRIPT_DIR")/policies"
 
+# Create admin policy (full access including policy management)
+echo "→ Creating policy: admin..."
+kubectl cp "$POLICY_DIR/admin.hcl" "$POD_NAME:/tmp/admin.hcl" -n infras-vault
+vault_cmd policy write admin /tmp/admin.hcl
+echo "  ✅ Created"
+
 # Create infras-admin policy
 echo "→ Creating policy: infras-admin..."
 kubectl cp "$POLICY_DIR/infras-admin.hcl" "$POD_NAME:/tmp/infras-admin.hcl" -n infras-vault
@@ -138,7 +144,7 @@ if vault_cmd read auth/userpass/users/admin 2>/dev/null; then
 else
     # Generate secure random password
     ADMIN_PASSWORD=$(generate_password)
-    vault_cmd write auth/userpass/users/admin password="$ADMIN_PASSWORD" policies="infras-admin,apps-admin"
+    vault_cmd write auth/userpass/users/admin password="$ADMIN_PASSWORD" policies="admin"
 
     # Save credentials to file
     cat > "$ADMIN_PASS_FILE" <<EOF
@@ -198,12 +204,13 @@ echo "Auth Methods:"
 echo "  • userpass - Username/password authentication"
 echo ""
 echo "Policies:"
-echo "  • infras-admin - Full access to infras/"
-echo "  • apps-admin  - Full access to apps/"
-echo "  • apps-read   - Read-only access to apps/"
+echo "  • admin         - Full administrative access (including policy management)"
+echo "  • infras-admin  - Full access to infras/"
+echo "  • apps-admin    - Full access to apps/"
+echo "  • apps-read     - Read-only access to apps/"
 echo ""
 echo "Users:"
-echo "  • admin (policies: infras-admin, apps-admin)"
+echo "  • admin (policies: admin)"
 echo "    Password saved in: $ADMIN_PASS_FILE"
 echo ""
 echo "════════════════════════════════════════════════════════════"

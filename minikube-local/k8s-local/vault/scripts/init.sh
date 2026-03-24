@@ -6,7 +6,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VAULT_DIR="$(dirname "$SCRIPT_DIR")"
-OUTPUT_DIR="$VAULT_DIR/.vault-init"
+OUTPUT_DIR="$VAULT_DIR/../.vault-init"
 OUTPUT_FILE="$OUTPUT_DIR/cluster-keys.json"
 ROOT_TOKEN_FILE="$OUTPUT_DIR/root-token.txt"
 
