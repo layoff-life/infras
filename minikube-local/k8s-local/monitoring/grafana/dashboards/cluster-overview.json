@@ -271,30 +271,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Running pods with namespace, pod name, ready state, restarts, and age",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "color-auto"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        }
-      },
+      "description": "Running pods with namespace, pod name, restart count, node, and owner",
       "gridPos": {
         "h": 16,
         "w": 24,
@@ -323,13 +300,15 @@
       "pluginVersion": "10.2.2",
       "targets": [
         {
-          "expr": "kube_pod_info",
+          "expr": "kube_pod_info * on(namespace, pod) group_left() (kube_pod_status_phase{phase=\"Running\"} == 1)",
           "format": "table",
+          "instant": true,
           "refId": "A"
         },
         {
-          "expr": "kube_pod_status_phase",
+          "expr": "sum(kube_pod_container_status_restarts_total) by (namespace, pod)",
           "format": "table",
+          "instant": true,
           "refId": "B"
         }
       ],
@@ -343,56 +322,69 @@
           "id": "filterFieldsByName",
           "options": {
             "include": {
-              "namespace": true,
-              "pod": true,
-              "node": true,
-              "pod_ip": true,
-              "created_by_kind": true,
-              "created_by_name": true,
-              "phase": true
+              "names": [
+                "namespace",
+                "pod",
+                "node",
+                "pod_ip",
+                "created_by_kind",
+                "created_by_name",
+                "Value #B"
+              ]
             }
-          }
-        },
-        {
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "fieldName": "phase",
-                "type": "include",
-                "value": "Running"
-              }
-            ]
           }
         },
         {
           "id": "organize",
           "options": {
-            "excludeByName": {
-              "Time": true,
-              "__name__": true
-            },
+            "excludeByName": {},
             "indexByName": {
-              "Namespace": 0,
-              "Pod": 1,
-              "Node": 2,
-              "Pod IP": 3,
-              "Status": 4,
-              "Kind": 5,
-              "Created By": 6
+              "namespace": 0,
+              "pod": 1,
+              "node": 2,
+              "pod_ip": 3,
+              "created_by_kind": 4,
+              "created_by_name": 5,
+              "Value #B": 6
             },
             "renameByName": {
               "created_by_kind": "Kind",
               "created_by_name": "Created By",
               "namespace": "Namespace",
               "node": "Node",
-              "phase": "Status",
               "pod": "Pod",
-              "pod_ip": "Pod IP"
+              "pod_ip": "Pod IP",
+              "Value #B": "Restarts"
             }
           }
         }
       ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "custom": { "align": "auto", "cellOptions": { "type": "auto" } }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Restarts" },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green", "value": null },
+                    { "color": "yellow", "value": 5 },
+                    { "color": "red", "value": 10 }
+                  ]
+                }
+              },
+              { "id": "custom.displayMode", "value": "color-background" }
+            ]
+          }
+        ]
+      },
       "type": "table"
     },
     {
