@@ -271,7 +271,7 @@
     {
       "id": 31,
       "type": "timeseries",
-      "title": "Memory Used vs Available — Server",
+      "title": "Memory Used vs Total — Server",
       "datasource": "Prometheus",
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
       "targets": [
@@ -281,18 +281,27 @@
           "refId": "A"
         },
         {
-          "expr": "node_memory_MemAvailable_bytes{instance=~\"$instance.*\"}",
-          "legendFormat": "Available",
-          "refId": "B"
-        },
-        {
           "expr": "node_memory_MemTotal_bytes{instance=~\"$instance.*\"}",
           "legendFormat": "Total",
-          "refId": "C"
+          "refId": "B"
         }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "bytes", "custom": { "fillOpacity": 10, "lineWidth": 2, "drawStyle": "line" } }
+        "defaults": {
+          "unit": "bytes",
+          "custom": { "fillOpacity": 15, "lineWidth": 2, "drawStyle": "line" }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Total" },
+            "properties": [
+              { "id": "custom.fillOpacity", "value": 0 },
+              { "id": "custom.lineWidth", "value": 1 },
+              { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [6, 4] } },
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "gray" } }
+            ]
+          }
+        ]
       },
       "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } }
     },
