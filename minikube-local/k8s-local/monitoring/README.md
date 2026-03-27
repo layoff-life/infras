@@ -36,22 +36,17 @@ For detailed access instructions (Cloudflare Tunnel, SSH tunnel, port-forward), 
 
 ## 📈 Available Dashboards
 
-### Cluster Overview
-**Dashboard:** MiniKube Cluster Overview
-**URL:** http://grafana.local/d/minikube-cluster/minikube-cluster-overview
+### 1. Kubernetes Cluster Monitoring
+**Dashboard:** Kubernetes Cluster Monitoring (via Prometheus)
+**Panels:** Overall health map of Kubernetes components, running pods, namespaces, and cluster footprint.
 
-**Panels:**
-1. **Cluster Overview**
-   - Total Pods, Namespaces, Nodes
-   - Pod Status distribution
-   - Pod Restarts (filtered)
-   - Running Pods table
+### 2. Node Exporter Full (Infrastructure Metrics)
+**Dashboard:** Node Exporter Full
+**Panels:** Deep insights into host-level physical resources (CPU, Memory, Disk Space, Disk I/O, Network I/O).
 
-2. **Node/Infrastructure Metrics**
-   - CPU, Memory, Disk, Network usage
-   - From cluster-internal perspective
-
-3. **Host Resources (Docker Stats)** ⭐
+### 3. Host Resources (Custom Docker Stats) ⭐
+**Dashboard:** Host Docker Stats (restored from Cluster Overview)
+**Panels:** Custom metrics from the `docker-stats-exporter`:
    - Host CPU Usage (gauge)
    - Host Memory Usage (gauge)
    - Host Memory Bytes (timeseries)
@@ -123,7 +118,9 @@ Prometheus scrapes metrics every 15 seconds from:
 - **Deployment:** `grafana/deployment.yaml`
 - **ConfigMap:** `grafana/configmap.yaml`
 - **Dashboards:** `grafana/dashboards/`
-- **Provisioning:** `grafana/dashboards.yaml`
+- **Provisioning:** `grafana/dashboard-*.yaml`
+
+> **Note on Dashboard ConfigMaps:** The Grafana dashboards are split into separate YAML ConfigMaps (e.g., `dashboard-node.yaml`) and injected via a projected volume in `deployment.yaml`. This is required to bypass the Kubernetes `metadata.annotations` size limit (256KB) that occurs during `kubectl apply`. A large dashboard like `Node Exporter Full` easily exceeds this limit if loaded into a single monolithic file.
 
 ### Prometheus
 - **StatefulSet:** `prometheus/statefulset.yaml`

@@ -81,3 +81,11 @@ spec:
               name: grafana-dashboard-node
           - configMap:
               name: grafana-dashboard-docker
+          - configMap:
+              name: grafana-dashboard-cluster-overview
+          - configMap:
+              name: grafana-dashboard-deployments
+          - configMap:
+              name: grafana-dashboard-namespace-resources
+          - configMap:
+              name: grafana-dashboard-storage

@@ -1,0 +1,409 @@
+{
+  "id": null,
+  "uid": "k8s-storage-v1",
+  "title": "Kubernetes Storage & PVC",
+  "description": "PVC status, disk usage per node and mountpoint, inode usage, and storage capacity tracking.",
+  "tags": ["kubernetes", "storage", "pvc", "disk"],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "schemaVersion": 36,
+  "version": 1,
+  "refresh": "1m",
+  "time": { "from": "now-3h", "to": "now" },
+  "timepicker": {},
+  "templating": {
+    "list": [
+      {
+        "name": "namespace",
+        "label": "Namespace",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(kube_persistentvolumeclaim_info, namespace)",
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "hide": 0,
+        "sort": 1
+      },
+      {
+        "name": "instance",
+        "label": "Node",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(node_uname_info, instance)",
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "hide": 0,
+        "sort": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "PVC Overview",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Total PVCs",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+      "targets": [
+        {
+          "expr": "count(kube_persistentvolumeclaim_info{namespace=~\"$namespace\"})",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "PVCs Bound",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+      "targets": [
+        {
+          "expr": "count(kube_persistentvolumeclaim_status_phase{phase=\"Bound\", namespace=~\"$namespace\"}) or vector(0)",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "PVCs Pending / Lost",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
+      "targets": [
+        {
+          "expr": "count(kube_persistentvolumeclaim_status_phase{phase=~\"Pending|Lost\", namespace=~\"$namespace\"}) or vector(0)",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 5,
+      "type": "gauge",
+      "title": "Most Used Filesystem %",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "targets": [
+        {
+          "expr": "max((node_filesystem_size_bytes{instance=~\"$instance\", fstype=~\"xfs|ext4\"} - node_filesystem_free_bytes{instance=~\"$instance\", fstype=~\"xfs|ext4\"}) / node_filesystem_size_bytes{instance=~\"$instance\", fstype=~\"xfs|ext4\"}) * 100",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 70 },
+              { "color": "red", "value": 90 }
+            ]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdMarkers": true }
+    },
+    {
+      "id": 6,
+      "type": "gauge",
+      "title": "Most Used Inode %",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "targets": [
+        {
+          "expr": "max((node_filesystem_files{instance=~\"$instance\", fstype=~\"xfs|ext4\"} - node_filesystem_files_free{instance=~\"$instance\", fstype=~\"xfs|ext4\"}) / node_filesystem_files{instance=~\"$instance\", fstype=~\"xfs|ext4\"}) * 100",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 70 },
+              { "color": "red", "value": 90 }
+            ]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdMarkers": true }
+    },
+    {
+      "id": 10,
+      "type": "table",
+      "title": "PVC List",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 5 },
+      "targets": [
+        {
+          "expr": "kube_persistentvolumeclaim_info{namespace=~\"$namespace\"}",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "A"
+        },
+        {
+          "expr": "kube_persistentvolumeclaim_status_phase{namespace=~\"$namespace\"}",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "B"
+        },
+        {
+          "expr": "kube_persistentvolumeclaim_resource_requests_storage_bytes{namespace=~\"$namespace\"}",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "C"
+        }
+      ],
+      "transformations": [
+        { "id": "merge", "options": {} },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [{ "fieldName": "Value #B", "type": "include", "value": "1" }],
+            "match": "any",
+            "type": "include"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "Time": true, "__name__": true, "job": true, "instance": true, "Value #B": true },
+            "renameByName": {
+              "namespace": "Namespace",
+              "persistentvolumeclaim": "PVC Name",
+              "storageclass": "Storage Class",
+              "volumename": "PV Name",
+              "phase": "Phase",
+              "Value #C": "Capacity (bytes)"
+            },
+            "indexByName": { "Namespace": 0, "PVC Name": 1, "Phase": 2, "Storage Class": 3, "PV Name": 4, "Capacity (bytes)": 5 }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Capacity (bytes)" }, "properties": [{ "id": "unit", "value": "bytes" }] }
+        ]
+      },
+      "options": { "showHeader": true, "cellHeight": "sm" },
+      "pluginVersion": "10.2.2"
+    },
+    {
+      "id": 20,
+      "type": "row",
+      "title": "Node Disk Usage",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 15 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "Disk Used % per Mountpoint",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "(node_filesystem_size_bytes{instance=~\"$instance\", fstype=~\"xfs|ext4\"} - node_filesystem_free_bytes{instance=~\"$instance\", fstype=~\"xfs|ext4\"}) / node_filesystem_size_bytes{instance=~\"$instance\", fstype=~\"xfs|ext4\"} * 100",
+          "legendFormat": "{{instance}} {{mountpoint}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 70 },
+              { "color": "red", "value": 90 }
+            ]
+          },
+          "custom": { "fillOpacity": 10, "lineWidth": 2, "drawStyle": "line", "thresholdsStyle": { "mode": "area" } }
+        }
+      },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last", "max"] } }
+    },
+    {
+      "id": 22,
+      "type": "timeseries",
+      "title": "Disk Available (bytes) per Mountpoint",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [
+        {
+          "expr": "node_filesystem_avail_bytes{instance=~\"$instance\", fstype=~\"xfs|ext4\"}",
+          "legendFormat": "{{instance}} {{mountpoint}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": { "fillOpacity": 10, "lineWidth": 2, "drawStyle": "line" }
+        }
+      },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last", "min"] } }
+    },
+    {
+      "id": 23,
+      "type": "timeseries",
+      "title": "Inode Used % per Mountpoint",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "targets": [
+        {
+          "expr": "(node_filesystem_files{instance=~\"$instance\", fstype=~\"xfs|ext4\"} - node_filesystem_files_free{instance=~\"$instance\", fstype=~\"xfs|ext4\"}) / node_filesystem_files{instance=~\"$instance\", fstype=~\"xfs|ext4\"} * 100",
+          "legendFormat": "{{instance}} {{mountpoint}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 70 },
+              { "color": "red", "value": 90 }
+            ]
+          },
+          "custom": { "fillOpacity": 10, "lineWidth": 1, "drawStyle": "line", "thresholdsStyle": { "mode": "area" } }
+        }
+      },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last", "max"] } }
+    },
+    {
+      "id": 24,
+      "type": "table",
+      "title": "Disk Space Summary",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "targets": [
+        {
+          "expr": "node_filesystem_size_bytes{instance=~\"$instance\", fstype=~\"xfs|ext4\"}",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "A"
+        },
+        {
+          "expr": "node_filesystem_avail_bytes{instance=~\"$instance\", fstype=~\"xfs|ext4\"}",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "B"
+        },
+        {
+          "expr": "(node_filesystem_size_bytes{instance=~\"$instance\", fstype=~\"xfs|ext4\"} - node_filesystem_free_bytes{instance=~\"$instance\", fstype=~\"xfs|ext4\"}) / node_filesystem_size_bytes{instance=~\"$instance\", fstype=~\"xfs|ext4\"} * 100",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "C"
+        }
+      ],
+      "transformations": [
+        { "id": "merge", "options": {} },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "Time": true, "__name__": true, "job": true, "fstype": true },
+            "renameByName": {
+              "instance": "Node",
+              "mountpoint": "Mountpoint",
+              "Value #A": "Total",
+              "Value #B": "Available",
+              "Value #C": "Used %"
+            },
+            "indexByName": { "Node": 0, "Mountpoint": 1, "Total": 2, "Available": 3, "Used %": 4 }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Total" }, "properties": [{ "id": "unit", "value": "bytes" }] },
+          { "matcher": { "id": "byName", "options": "Available" }, "properties": [{ "id": "unit", "value": "bytes" }] },
+          {
+            "matcher": { "id": "byName", "options": "Used %" },
+            "properties": [
+              { "id": "unit", "value": "percent" },
+              { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "orange", "value": 70 }, { "color": "red", "value": 90 }] } },
+              { "id": "custom.displayMode", "value": "color-background" }
+            ]
+          }
+        ]
+      },
+      "options": { "showHeader": true, "cellHeight": "sm", "sortBy": [{ "desc": true, "displayName": "Used %" }] },
+      "pluginVersion": "10.2.2"
+    }
+  ],
+  "links": []
+}
