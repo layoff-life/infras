@@ -12,3 +12,6 @@ volumes/minikube/
 minikube-local/k8s-local/.vault-init/
 *.bin
 *.exe
+
+# Exception: Allow kubectl binary in infras-cli (needed for Docker image)
+!minikube-local/k8s-local/infras-cli/kubectl

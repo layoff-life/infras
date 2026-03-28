@@ -37,6 +37,21 @@ echo ""
 # Change to project directory
 cd "$PROJECT_DIR"
 
+# Get kubectl binary - use host's kubectl if available, otherwise download
+if [ ! -f "kubectl" ]; then
+    if command -v kubectl &> /dev/null; then
+        echo -e "${YELLOW}Using host kubectl binary...${NC}"
+        cp /usr/local/bin/kubectl ./kubectl
+        chmod +x kubectl
+        echo -e "${GREEN}✓${NC} Copied kubectl from host"
+    else
+        echo -e "${YELLOW}kubectl not found on host, downloading...${NC}"
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        chmod +x kubectl
+        echo -e "${GREEN}✓${NC} Downloaded kubectl"
+    fi
+fi
+
 # Build Docker image using host network for connectivity
 docker build --network=host -t "${FULL_IMAGE}" .
 

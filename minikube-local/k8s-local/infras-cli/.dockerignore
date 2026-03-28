@@ -58,5 +58,5 @@ tmp/
 temp/
 
 # IMPORTANT: kubectl binary is explicitly NOT ignored
-# We need to include it in the Docker image
+# We need to include it in the Docker image for pod operations
 !kubectl
