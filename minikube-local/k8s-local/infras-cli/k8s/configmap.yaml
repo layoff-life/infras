@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: infras-cli-config
+  namespace: infras-cli
+  labels:
+    app: infras-cli
+data:
+  # Logging configuration
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+
+  # Vault configuration (uses cluster service DNS)
+  VAULT_ADDR: "http://vault.infras-vault.svc.cluster.local:8200"
+
+  # Infrastructure service endpoints (for reference)
+  # Actual connections are made via kubectl exec
+  MYSQL_HOST: "mysql.infras-mysql.svc.cluster.local"
+  MYSQL_PORT: "3306"
+  POSTGRES_HOST: "postgres.infras-postgres.svc.cluster.local"
+  POSTGRES_PORT: "5432"
+  REDIS_HOST: "redis-0.redis-headless.infras-redis.svc.cluster.local"
+  REDIS_PORT: "6379"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-0.kafka-headless.infras-kafka.svc.cluster.local:29092"
+  KEYCLOAK_HOST: "keycloak.infras-keycloak.svc.cluster.local"
+  KEYCLOAK_PORT: "8080"

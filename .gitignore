@@ -10,3 +10,5 @@ volumes/minikube/
 
 # Vault initialization files (sensitive)
 minikube-local/k8s-local/.vault-init/
+*.bin
+*.exe

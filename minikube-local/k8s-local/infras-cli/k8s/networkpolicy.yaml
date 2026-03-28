@@ -1,0 +1,94 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: infras-cli-policy
+  namespace: infras-cli
+  labels:
+    app: infras-cli
+spec:
+  podSelector:
+    matchLabels:
+      app: infras-cli
+  policyTypes:
+    - Ingress
+    - Egress
+
+  # Ingress rules - allow traffic from ingress controller and monitoring
+  ingress:
+    # Allow HTTP traffic from ingress controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8000
+
+    # Allow metrics scraping from monitoring namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: infras-monitoring
+      ports:
+        - protocol: TCP
+          port: 8000
+        - protocol: TCP
+          port: 9090
+
+    # Allow traffic from other infras namespaces for inter-service communication
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              infras: "true"
+      ports:
+        - protocol: TCP
+          port: 8000
+
+  # Egress rules - allow access to infrastructure services and Kubernetes API
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+    # Allow access to Kubernetes API server
+    - to:
+        - namespaceSelector:
+            matchLabels: {}
+      ports:
+        - protocol: TCP
+          port: 443
+
+    # Allow access to Vault
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: infras-vault
+      ports:
+        - protocol: TCP
+          port: 8200
+
+    # Allow access to infrastructure services (MySQL, PostgreSQL, Redis, Kafka, Keycloak)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              infras: "true"
+      ports:
+        - protocol: TCP
+          port: 3306  # MySQL
+        - protocol: TCP
+          port: 5432  # PostgreSQL
+        - protocol: TCP
+          port: 6379  # Redis
+        - protocol: TCP
+          port: 29092 # Kafka
+        - protocol: TCP
+          port: 9092  # Kafka (alternative)
+        - protocol: TCP
+          port: 8080  # Keycloak

@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     max_retries: int = 3
     retry_delay: int = 1
 
+    # Metrics Configuration
+    metrics_enabled: bool = True
+    metrics_path: str = "/metrics"
+
     # Service Connection Settings (for reference, actual connections via kubectl exec)
     mysql_host: str = "mysql.infras-mysql.svc.cluster.local"
     mysql_port: int = 3306

@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: infras-cli
+  namespace: infras-cli
+  labels:
+    app: infras-cli
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: infras-cli
+  template:
+    metadata:
+      labels:
+        app: infras-cli
+        version: v1
+      annotations:
+        # Prometheus monitoring annotations
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: infras-cli
+
+      # Restart policy for the container
+      restartPolicy: Always
+
+      containers:
+        - name: infras-cli-api
+          image: infras-cli:latest
+          imagePullPolicy: Never  # Use local image from minikube registry
+
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+
+          # Environment variables from ConfigMap
+          envFrom:
+            - configMapRef:
+                name: infras-cli-config
+
+          # Additional environment variables
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: PYTHONPATH
+              value: "/app"
+
+          # Resource limits and requests
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+          # Liveness probe - checks if the process is running
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health/live
+              port: 8000
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+
+          # Readiness probe - checks if dependencies are available
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health/ready
+              port: 8000
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+
+          # Startup probe - gives the app time to start
+          startupProbe:
+            httpGet:
+              path: /api/v1/health/live
+              port: 8000
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 12  # 12 * 5 = 60 seconds max startup time
+
+      # No volumes needed - stateless service
+      volumes: []

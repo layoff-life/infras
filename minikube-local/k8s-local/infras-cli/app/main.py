@@ -16,6 +16,13 @@ from app.config import settings
 from app.utils.logging import configure_logging
 import structlog
 
+# Prometheus metrics (optional, only if enabled)
+try:
+    from prometheus_fastapi_instrumentator import Instrumentator
+    PROMETHEUS_AVAILABLE = True
+except ImportError:
+    PROMETHEUS_AVAILABLE = False
+
 # Configure logging
 configure_logging(settings.log_level, settings.log_format)
 logger = structlog.get_logger(__name__)
@@ -40,6 +47,21 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json"
 )
+
+# Initialize Prometheus metrics BEFORE adding routes and startup events
+# This must be done before the app is fully initialized
+if settings.metrics_enabled and PROMETHEUS_AVAILABLE:
+    instrumentator = Instrumentator()
+    instrumentator.instrument(app).expose(app, endpoint=settings.metrics_path)
+    logger.info(
+        "Prometheus metrics instrumentator initialized",
+        metrics_path=settings.metrics_path
+    )
+elif settings.metrics_enabled and not PROMETHEUS_AVAILABLE:
+    logger.warning(
+        "Prometheus metrics requested but prometheus-fastapi-instrumentator not installed",
+        suggestion="Install with: pip install prometheus-fastapi-instrumentator"
+    )
 
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
